@@ -1,0 +1,79 @@
+package grpc
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	pb "api-gateway/proto/user"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+type UserClient struct {
+	Client pb.UserServiceClient
+}
+
+func NewUserClient() *UserClient {
+
+	conn, err := grpc.NewClient(
+		"localhost:50052",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+
+	if err != nil {
+		log.Fatalf("Failed to connect user service: %v", err)
+	}
+
+	client := pb.NewUserServiceClient(conn)
+
+	return &UserClient{
+		Client: client,
+	}
+}
+
+func (u *UserClient) UpdateUserProfile(
+	userID string,
+	name string,
+	phone string,
+	email string,
+	address string,
+	dob string,
+	avatar string,
+) (*pb.UserResponse, error) {
+
+	resp, err := u.Client.UpdateUserProfile(
+		context.Background(),
+		&pb.UpdateUserRequest{
+			UserId:  userID,
+			Name:    name,
+			Phone:   phone,
+			Email:   email,
+			Address: address,
+			Dob:     dob,
+			Avatar:  avatar,
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (u *UserClient) GetUserData(
+	email string,
+) (*pb.UserProfileResponse, error) {
+	resp, err := u.Client.GetUserByEmail(
+		context.Background(),
+		&pb.GetUserByEmailRequest{Email: email},
+	)
+	fmt.Println("responce grpc : ", resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}

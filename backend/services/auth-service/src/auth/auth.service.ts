@@ -164,13 +164,14 @@ export class AuthService implements OnModuleInit {
   }
 
   async updateUser(data: UpdateUserDto, email: string) {
+    console.log('UpdateUser hit');
     try {
       const user = await this.authRepo.findByEmail(email);
 
       if (!user) {
         throw new RpcException('User not found');
       }
-
+      console.log('user found:', user.id, user.email);
       try {
         await firstValueFrom(
           this.userService.UpdateUserProfile({

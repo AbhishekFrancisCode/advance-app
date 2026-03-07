@@ -15,9 +15,10 @@ datasource db {
 }
 
 model UserProfile {
-  id      String    @id
-  name    String
-  phone   String?   @unique
+  id    String  @id
+  name  String
+  phone String?
+  email String?  @unique
   avatar  String?
   address String?
   dob     DateTime?

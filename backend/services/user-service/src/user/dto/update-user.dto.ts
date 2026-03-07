@@ -2,7 +2,7 @@ import { IsOptional, IsString, MinLength, IsDateString } from 'class-validator';
 
 export class UpdateUserDto {
   @IsString()
-  user_id: string;
+  userId: string;
 
   @IsOptional()
   @IsString()
@@ -12,6 +12,10 @@ export class UpdateUserDto {
   @IsString()
   @MinLength(10)
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
 
   @IsOptional()
   @IsString()

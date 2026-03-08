@@ -63,13 +63,35 @@ func GetUserByEmail(c *gin.Context) {
 
 	email := c.GetString("email")
 
-	resp, err := grpc.UserSvc.GetUserData(email)
+	resp, err := grpc.UserSvc.GetUserDataByEmail(email)
 
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 	fmt.Println("response : ", resp)
+	c.JSON(http.StatusOK, resp)
+
+}
+
+func GetUserById(c *gin.Context) {
+	userID := c.GetString("user_id")
+	fmt.Println("User ID from context:", userID)
+
+	if userID == "" {
+		c.JSON(404, gin.H{
+			"error": "user_id not found in context",
+		})
+		return
+	}
+
+	resp, err := grpc.UserSvc.GetUserDataById(userID)
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, resp)
 
 }

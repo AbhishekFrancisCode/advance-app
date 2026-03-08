@@ -19,13 +19,25 @@ export class UserRepository {
   }
 
   async findById(userId: string) {
-    return await this.prisma.userProfile.findUnique({
+    const user = await this.prisma.userProfile.findUnique({
       where: { id: userId },
     });
+
+    if (!user) {
+      throw new RpcException('User not found');
+    }
+    return {
+      id: user.id,
+      name: user.name,
+      phone: user.phone,
+      avatar: user.avatar,
+      address: user.address,
+      dob: user.dob?.toISOString(),
+      email: '',
+    };
   }
 
   async findByEmail(data: EmailDto) {
-    console.log('email repo hit', data);
     const user = await this.prisma.userProfile.findFirst({
       where: { email: data.email },
     });
@@ -33,7 +45,6 @@ export class UserRepository {
     if (!user) {
       throw new RpcException('User not found');
     }
-    console.log('email repo hit user', user);
     return {
       id: user.id,
       name: user.name,

@@ -17,6 +17,6 @@ func RegisterUserRoutes(router *gin.Engine) {
 	// PATCH /users/profile → UpdateUserProfile handler
 	user.PATCH("/profile", middleware.JWTMiddleware(), handlers.UpdateUserProfile)
 	user.GET("/email", middleware.JWTMiddleware(), handlers.GetUserByEmail)
-	// user.GET("/me", middleware.JWTMiddleware(), handlers.GetMyProfile)
+	user.GET("/me", middleware.JWTMiddleware(), handlers.GetUserById)
 
 }

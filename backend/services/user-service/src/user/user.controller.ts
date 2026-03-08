@@ -3,7 +3,7 @@ import { UserService } from './user.service';
 import { GrpcMethod } from '@nestjs/microservices';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { EmailDto } from './dto/user-profile.dto';
+import { EmailDto, UserIdDto } from './dto/user-profile.dto';
 
 @Controller()
 export class UserController {
@@ -11,19 +11,22 @@ export class UserController {
 
   @GrpcMethod('UserService', 'CreateUserProfile')
   createProfile(data: CreateUserDto) {
-    console.log('CreateProfile hit with data:', data);
     return this.userService.createProfile(data);
   }
 
   @GrpcMethod('UserService', 'UpdateUserProfile')
   updateUserProfile(data: UpdateUserDto) {
-    console.log('UpdateProfile hit:', data);
     return this.userService.updateProfile(data);
   }
 
   @GrpcMethod('UserService', 'GetUserByEmail')
-  getProfileById(data: EmailDto) {
-    console.log('email hit');
+  getProfileByEmail(data: EmailDto) {
     return this.userService.getUserDataByEmail(data);
+  }
+
+  @GrpcMethod('UserService', 'GetUserById')
+  getProfileById(data: UserIdDto) {
+    console.log('userID hit', data);
+    return this.userService.getUserDataById(data);
   }
 }

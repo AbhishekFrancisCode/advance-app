@@ -63,12 +63,27 @@ func (u *UserClient) UpdateUserProfile(
 	return resp, nil
 }
 
-func (u *UserClient) GetUserData(
+func (u *UserClient) GetUserDataByEmail(
 	email string,
 ) (*pb.UserProfileResponse, error) {
 	resp, err := u.Client.GetUserByEmail(
 		context.Background(),
 		&pb.GetUserByEmailRequest{Email: email},
+	)
+	fmt.Println("responce grpc : ", resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (u *UserClient) GetUserDataById(
+	userID string,
+) (*pb.UserProfileResponse, error) {
+	resp, err := u.Client.GetUserById(
+		context.Background(),
+		&pb.GetUserRequest{UserId: userID},
 	)
 	fmt.Println("responce grpc : ", resp)
 	if err != nil {

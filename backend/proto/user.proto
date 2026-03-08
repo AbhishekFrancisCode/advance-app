@@ -5,7 +5,7 @@ package user;
 option go_package = "api-gateway/proto/user;user";
 service UserService {
   rpc CreateUserProfile (CreateUserRequest) returns (UserResponse);
-  rpc GetUserById (GetUserRequest) returns (UserResponse);
+  rpc GetUserById (GetUserRequest) returns (UserProfileResponse);
   rpc UpdateUserProfile (UpdateUserRequest) returns (UserResponse);
   rpc GetUserByEmail (GetUserByEmailRequest) returns (UserProfileResponse);
 }

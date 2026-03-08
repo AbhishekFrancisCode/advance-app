@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { EmailDto } from './dto/user-profile.dto';
+import { EmailDto, UserIdDto } from './dto/user-profile.dto';
 
 @Injectable()
 export class UserService {
@@ -17,5 +17,9 @@ export class UserService {
 
   async getUserDataByEmail(data: EmailDto) {
     return this.userRepository.findByEmail(data);
+  }
+
+  async getUserDataById(data: UserIdDto) {
+    return this.userRepository.findById(data.userId);
   }
 }

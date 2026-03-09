@@ -31,4 +31,14 @@ export class AuthController {
     console.log('Delete refresh hit 1', data.userId);
     return this.authService.logout(data.userId);
   }
+
+  @GrpcMethod('AuthService', 'GetSessions')
+  getSessions(data: { userId: string }) {
+    return this.authService.getSessions(data.userId);
+  }
+
+  @GrpcMethod('AuthService', 'LogoutSession')
+  logoutSession(data: { sessionId: string }) {
+    return this.authService.logoutSession(data.sessionId);
+  }
 }

@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import type { ClientGrpc } from '@nestjs/microservices';
 
 import { firstValueFrom, Observable } from 'rxjs';
+import getDeviceType from 'src/utils/device-type';
 
 interface UserService {
   CreateUserProfile(data: {
@@ -66,6 +67,7 @@ export class AuthService implements OnModuleInit {
         }),
       );
     } catch {
+      // await this.authRepo.deleteUser(user.id);
       throw new RpcException('User profile creation failed');
     }
 
@@ -79,12 +81,16 @@ export class AuthService implements OnModuleInit {
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '60m',
+      expiresIn: '7d',
     });
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
-    await this.authRepo.updateRefreshToken(user.id, hashedRefreshToken);
+    await this.authRepo.createRefreshToken(user.id, hashedRefreshToken, {
+      userAgent: dto.userAgent,
+      ipAddress: dto.ipAddress,
+      device: getDeviceType(dto.userAgent),
+    });
 
     return {
       message: 'User registered successfully',
@@ -123,7 +129,11 @@ export class AuthService implements OnModuleInit {
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
-    await this.authRepo.updateRefreshToken(user.id, hashedRefreshToken);
+    await this.authRepo.createRefreshToken(user.id, hashedRefreshToken, {
+      userAgent: dto.userAgent,
+      ipAddress: dto.ipAddress,
+      device: getDeviceType(dto.userAgent),
+    });
 
     return {
       message: 'successful',
@@ -133,7 +143,6 @@ export class AuthService implements OnModuleInit {
   }
 
   async refresh(refreshToken: string) {
-    console.log('refresh hit 2', refreshToken);
     try {
       const decoded = this.jwtService.verify(refreshToken);
 
@@ -150,15 +159,31 @@ export class AuthService implements OnModuleInit {
       if (!isMatch) {
         throw new RpcException('Access denied');
       }
+      // Rotation
+      // Delete old TOKEN
+      await this.authRepo.deleteRefreshTokens(decoded.sub);
 
-      const newAccessToken = this.jwtService.sign(
-        { sub: decoded.sub, email: decoded.email },
-        { expiresIn: '15m' },
-      );
+      const payload = {
+        sub: decoded.sub,
+        email: decoded.email,
+      };
+
+      const newAccessToken = this.jwtService.sign(payload, {
+        expiresIn: '15m',
+      });
+
+      const newRefreshToken = this.jwtService.sign(payload, {
+        expiresIn: '7d',
+      });
+
+      const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
+
+      await this.authRepo.updateRefreshToken(decoded.sub, hashedRefreshToken);
 
       return {
-        message: 'Successful',
+        message: 'refreshed',
         accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
       };
     } catch {
       throw new RpcException('Refresh token expired. Please login again.');
@@ -171,6 +196,27 @@ export class AuthService implements OnModuleInit {
 
     return {
       message: 'logged out successfully',
+    };
+  }
+
+  async getSessions(userId: string) {
+    const sessions = await this.authRepo.getUserSessions(userId);
+
+    return {
+      sessions: sessions.map((s) => ({
+        id: s.id,
+        device: s.device ?? '',
+        ipAddress: s.ipAddress ?? '',
+        createdAt: s.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  async logoutSession(sessionId: string) {
+    await this.authRepo.deleteSession(sessionId);
+
+    return {
+      message: 'session logged out',
     };
   }
 }

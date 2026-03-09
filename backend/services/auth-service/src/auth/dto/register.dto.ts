@@ -16,4 +16,12 @@ export class RegisterDto {
   @Optional()
   @MinLength(10)
   phone?: string;
+
+  @IsString()
+  @Optional()
+  userAgent?: string;
+
+  @IsString()
+  @Optional()
+  ipAddress?: string;
 }

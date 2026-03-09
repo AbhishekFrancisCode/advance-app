@@ -36,13 +36,16 @@ func NewAuthClient() *AuthClient {
 }
 
 // Login calls Auth Service Login RPC
-func (a *AuthClient) Login(email string, password string) (*authpb.AuthResponse, error) {
+func (a *AuthClient) Login(email string, password string, userAgent string,
+	ipAddress string) (*authpb.AuthResponse, error) {
 
 	resp, err := a.Client.Login(
 		context.Background(),
 		&authpb.LoginRequest{
-			Email:    email,
-			Password: password,
+			Email:     email,
+			Password:  password,
+			UserAgent: userAgent,
+			IpAddress: ipAddress,
 		},
 	)
 
@@ -54,13 +57,21 @@ func (a *AuthClient) Login(email string, password string) (*authpb.AuthResponse,
 }
 
 // Register calls Auth Service Register RPC
-func (a *AuthClient) Register(email string, password string) (*authpb.AuthResponse, error) {
+func (a *AuthClient) Register(email string, password string, name string,
+	phone string,
+	userAgent string,
+	ipAddress string,
+) (*authpb.AuthResponse, error) {
 
 	resp, err := a.Client.Register(
 		context.Background(),
 		&authpb.RegisterRequest{
-			Email:    email,
-			Password: password,
+			Email:     email,
+			Password:  password,
+			Name:      name,
+			Phone:     phone,
+			UserAgent: userAgent,
+			IpAddress: ipAddress,
 		},
 	)
 
@@ -92,6 +103,34 @@ func (a *AuthClient) Logout(userId string) (*authpb.MessageResponse, error) {
 		},
 	)
 
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (a *AuthClient) GetSessions(userId string) (*authpb.SessionsResponse, error) {
+	resp, err := a.Client.GetSessions(
+		context.Background(),
+		&authpb.GetSessionsRequest{
+			UserId: userId,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (a *AuthClient) LogoutSession(sessionId string) (*authpb.MessageResponse, error) {
+	resp, err := a.Client.LogoutSession(
+		context.Background(),
+		&authpb.LogoutSessionRequest{
+			SessionId: sessionId,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

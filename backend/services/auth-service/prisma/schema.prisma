@@ -30,13 +30,17 @@ model UserAuth {
 
 model RefreshToken {
   id     String @id @default(uuid())
-  token  String @unique
+  token  String
   userId String
 
-  user UserAuth @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device    String?
+  ipAddress String?
+  userAgent String?
 
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  user UserAuth @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum Role {

@@ -9,6 +9,8 @@ service AuthService {
   rpc Login (LoginRequest) returns (AuthResponse);
   rpc RefreshToken (RefreshRequest) returns (RefreshResponse);
   rpc Logout (LogoutRequest) returns (MessageResponse);
+  rpc GetSessions (GetSessionsRequest) returns (SessionsResponse);
+  rpc LogoutSession (LogoutSessionRequest) returns (MessageResponse);
 }
 
 message RegisterRequest {
@@ -16,11 +18,17 @@ message RegisterRequest {
   string password = 2;
   string name     = 3;
   string phone    = 4;
+
+  string userAgent = 5;
+  string ipAddress = 6;
 }
 
 message LoginRequest {
   string email    = 1;
   string password = 2;
+
+  string userAgent = 5;
+  string ipAddress = 6;
 }
 
 message LogoutRequest {
@@ -33,6 +41,7 @@ message AuthResponse {
   string refreshToken = 3;
 }
 
+//Refresh tokens
 message RefreshRequest {
   string refreshToken = 1;
 }
@@ -44,4 +53,24 @@ message RefreshResponse {
 
 message MessageResponse {
   string message = 1;
+}
+
+//Sessions
+message GetSessionsRequest {
+  string userId = 1;
+}
+
+message Session {
+  string id        = 1;
+  string device    = 2;
+  string ipAddress = 3;
+  string createdAt = 4;
+}
+
+message SessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message LogoutSessionRequest {
+  string sessionId = 1;
 }

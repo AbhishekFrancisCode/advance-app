@@ -19,6 +19,8 @@ type LoginRequest struct {
 type RegisterRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
 }
 
 type RefreshRequest struct {
@@ -27,6 +29,10 @@ type RefreshRequest struct {
 
 type LogoutRequest struct {
 	UserId string `json:"userId"`
+}
+
+type LogoutSessionRequest struct {
+	SessionID string `json:"sessionId"`
 }
 
 // Login handles POST /auth/login
@@ -43,12 +49,17 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	userAgent := c.GetHeader("User-Agent")
+	ip := c.ClientIP()
+
 	// Call Auth Service using gRPC client
 	resp, err := grpc.AuthSvc.Client.Login(
 		c,
 		&authpb.LoginRequest{
-			Email:    req.Email,
-			Password: req.Password,
+			Email:     req.Email,
+			Password:  req.Password,
+			UserAgent: userAgent,
+			IpAddress: ip,
 		},
 	)
 
@@ -78,12 +89,19 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	userAgent := c.GetHeader("User-Agent")
+	ip := c.ClientIP()
+
 	// Call Auth Service using gRPC
 	resp, err := grpc.AuthSvc.Client.Register(
 		c,
 		&authpb.RegisterRequest{
-			Email:    req.Email,
-			Password: req.Password,
+			Email:     req.Email,
+			Password:  req.Password,
+			Name:      req.Name,
+			Phone:     req.Phone,
+			UserAgent: userAgent,
+			IpAddress: ip,
 		},
 	)
 
@@ -145,4 +163,43 @@ func Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": resp.Message,
 	})
+}
+
+func GetSessions(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	resp, err := grpc.AuthSvc.Client.GetSessions(
+		c,
+		&authpb.GetSessionsRequest{
+			UserId: userID,
+		},
+	)
+
+	if err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+
+	c.JSON(200, resp)
+}
+
+func GetLogoutSession(c *gin.Context) {
+	var req LogoutSessionRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+
+	resp, err := grpc.AuthSvc.Client.LogoutSession(
+		c, &authpb.LogoutSessionRequest{
+			SessionId: req.SessionID,
+		})
+
+	if err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }

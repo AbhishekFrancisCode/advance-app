@@ -8,7 +8,6 @@ service AuthService {
   rpc Register (RegisterRequest) returns (AuthResponse);
   rpc Login (LoginRequest) returns (AuthResponse);
   rpc RefreshToken (RefreshRequest) returns (RefreshResponse);
-  rpc UpdateUser (UserRequest) returns (UserResponse);
 }
 
 message RegisterRequest {
@@ -24,7 +23,7 @@ message LoginRequest {
 }
 
 message AuthResponse {
-  string message       = 1;
+  string message      = 1;
   string accessToken  = 2;
   string refreshToken = 3;
 }
@@ -34,17 +33,6 @@ message RefreshRequest {
 }
 
 message RefreshResponse {
-  string message      = 1;
+  string message     = 1;
   string accessToken = 2;
-}
-
-message UserRequest {
-  string name  = 1;
-  string phone = 2;
-}
-
-message UserResponse {
-  string name    = 1;
-  string phone   = 2;
-  string message = 3;
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"api-gateway/internal/grpc"
+	"api-gateway/internal/utils"
 	"fmt"
 	"net/http"
 
@@ -24,7 +25,7 @@ func UpdateUserProfile(c *gin.Context) {
 
 	// read request body
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		utils.HandleGrpcError(c, err)
 		return
 	}
 
@@ -42,7 +43,7 @@ func UpdateUserProfile(c *gin.Context) {
 	)
 
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		utils.HandleGrpcError(c, err)
 		return
 	}
 
@@ -57,7 +58,7 @@ func GetUserByEmail(c *gin.Context) {
 	var req GetUserByEmailRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		utils.HandleGrpcError(c, err)
 		return
 	}
 
@@ -66,7 +67,7 @@ func GetUserByEmail(c *gin.Context) {
 	resp, err := grpc.UserSvc.GetUserDataByEmail(email)
 
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		utils.HandleGrpcError(c, err)
 		return
 	}
 	fmt.Println("response : ", resp)
@@ -76,7 +77,6 @@ func GetUserByEmail(c *gin.Context) {
 
 func GetUserById(c *gin.Context) {
 	userID := c.GetString("user_id")
-	fmt.Println("User ID from context:", userID)
 
 	if userID == "" {
 		c.JSON(404, gin.H{
@@ -88,7 +88,7 @@ func GetUserById(c *gin.Context) {
 	resp, err := grpc.UserSvc.GetUserDataById(userID)
 
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		utils.HandleGrpcError(c, err)
 		return
 	}
 

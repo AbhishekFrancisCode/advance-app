@@ -6,7 +6,6 @@ import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { RpcException } from '@nestjs/microservices/exceptions/rpc-exception';
 import { JwtService } from '@nestjs/jwt';
-import { UpdateUserDto } from './dto/update-user.dto';
 import type { ClientGrpc } from '@nestjs/microservices';
 
 import { firstValueFrom, Observable } from 'rxjs';
@@ -119,7 +118,7 @@ export class AuthService implements OnModuleInit {
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '60m',
+      expiresIn: '7d',
     });
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
@@ -134,58 +133,35 @@ export class AuthService implements OnModuleInit {
   }
 
   async refresh(refreshToken: string) {
+    console.log('refresh hit 2', refreshToken);
     try {
       const decoded = this.jwtService.verify(refreshToken);
 
-      const user = await this.authRepo.findByEmail(decoded.email);
+      const storedToken = await this.authRepo.getRefreshTokenByUserId(
+        decoded.sub,
+      );
 
-      if (!user) {
+      if (!storedToken) {
         throw new RpcException('Access denied');
       }
 
-      const isMatch = await bcrypt.compare(refreshToken, user.passwordHash);
+      const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
 
       if (!isMatch) {
         throw new RpcException('Access denied');
       }
 
       const newAccessToken = this.jwtService.sign(
-        { sub: user.id, email: user.email },
+        { sub: decoded.sub, email: decoded.email },
         { expiresIn: '15m' },
       );
 
       return {
-        message: 'refreshed',
+        message: 'Successful',
         accessToken: newAccessToken,
       };
     } catch {
       throw new RpcException('Refresh token expired. Please login again.');
-    }
-  }
-
-  async updateUser(data: UpdateUserDto, email: string) {
-    console.log('UpdateUser hit');
-    try {
-      const user = await this.authRepo.findByEmail(email);
-
-      if (!user) {
-        throw new RpcException('User not found');
-      }
-      console.log('user found:', user.id, user.email);
-      try {
-        await firstValueFrom(
-          this.userService.UpdateUserProfile({
-            user_id: user.id,
-            name: data.name,
-            phone: data.phone,
-          }),
-        );
-      } catch {
-        throw new RpcException('User profile creation failed');
-      }
-      return { message: 'User updated successfully' };
-    } catch (e) {
-      throw new RpcException(e.message || 'Error updating user');
     }
   }
 }

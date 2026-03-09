@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -21,7 +20,7 @@ func JWTMiddleware() gin.HandlerFunc {
 		// Example header:
 		// Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 		authHeader := c.GetHeader("Authorization")
-		fmt.Println(authHeader)
+		// fmt.Println(authHeader)
 
 		// VALIDATION 1:
 		// If the header is missing, the user is not authenticated
@@ -72,7 +71,7 @@ func JWTMiddleware() gin.HandlerFunc {
 
 		// STEP 4: Extract the claims (payload inside JWT)
 		claims := token.Claims.(jwt.MapClaims)
-		fmt.Println("claims", claims)
+		// fmt.Println("claims", claims)
 		// Example JWT payload:
 		// {
 		//   "user_id": "123",
@@ -83,7 +82,7 @@ func JWTMiddleware() gin.HandlerFunc {
 		// VALIDATION 5:
 		// Ensure user_id exists in the token payload
 		userID, ok := claims["sub"].(string)
-		fmt.Println("sub", userID)
+		// fmt.Println("sub", userID)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "Invalid token payload",

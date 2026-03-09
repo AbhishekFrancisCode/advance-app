@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"api-gateway/internal/grpc"
+	"api-gateway/internal/utils"
 	authpb "api-gateway/proto/auth"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +19,10 @@ type LoginRequest struct {
 type RegisterRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type RefreshRequest struct {
+	RefreshToken string `json:"refreshToken"`
 }
 
 // Login handles POST /auth/login
@@ -90,5 +95,29 @@ func Register(c *gin.Context) {
 		"message":      resp.Message,
 		"accessToken":  resp.AccessToken,
 		"refreshToken": resp.RefreshToken,
+	})
+}
+
+func RefreshToken(c *gin.Context) {
+	var req RefreshRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+
+	resp, err := grpc.AuthSvc.Client.RefreshToken(
+		c,
+		&authpb.RefreshRequest{
+			RefreshToken: req.RefreshToken,
+		})
+
+	if err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message":     resp.Message,
+		"accessToken": resp.AccessToken,
 	})
 }

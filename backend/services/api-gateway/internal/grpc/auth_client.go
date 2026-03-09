@@ -70,3 +70,15 @@ func (a *AuthClient) Register(email string, password string) (*authpb.AuthRespon
 
 	return resp, nil
 }
+
+func (a *AuthClient) RefreshToken(refreshToken string) (*authpb.RefreshResponse, error) {
+	resp, err := a.Client.RefreshToken(
+		context.Background(),
+		&authpb.RefreshRequest{RefreshToken: refreshToken},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class AuthRepository {
@@ -23,6 +22,14 @@ export class AuthRepository {
     });
   }
 
+  async getRefreshTokenByUserId(userId: string) {
+    return this.prisma.refreshToken.findFirst({
+      where: {
+        userId: userId,
+      },
+    });
+  }
+
   async updateRefreshToken(userId: string, refreshToken: string) {
     return this.prisma.userAuth.update({
       where: {
@@ -36,13 +43,6 @@ export class AuthRepository {
           },
         },
       },
-    });
-  }
-
-  async updateUserData(data: UpdateUserDto, email: string) {
-    return this.prisma.user.update({
-      where: { email: email },
-      data: { name: data.name, phone: data.phone ? String(data.phone) : null },
     });
   }
 }

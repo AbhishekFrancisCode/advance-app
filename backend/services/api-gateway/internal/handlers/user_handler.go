@@ -87,14 +87,10 @@ func GetUserById(c *gin.Context) {
 		return
 	}
 	ctx := utils.CreateGrpcContext(c)
-	resp, err := grpc.UserSvc.GetUserDataById(ctx, userID)
 
-	if err != nil {
-		utils.HandleGrpcError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
+	utils.HandleGrpcCall(c, func() (interface{}, error) {
+		return grpc.UserSvc.GetUserDataById(ctx, userID)
+	})
 
 }
 
@@ -104,12 +100,7 @@ func DeleteUser(c *gin.Context) {
 
 	ctx := utils.CreateGrpcContext(c)
 
-	resp, err := grpc.UserSvc.DeleteUser(ctx, userID)
-
-	if err != nil {
-		utils.HandleGrpcError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
+	utils.HandleGrpcCall(c, func() (interface{}, error) {
+		return grpc.UserSvc.DeleteUser(ctx, userID)
+	})
 }

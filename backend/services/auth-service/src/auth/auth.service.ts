@@ -191,7 +191,6 @@ export class AuthService implements OnModuleInit {
   }
 
   async logout(userId: string) {
-    console.log('Delete refresh hit 2', userId);
     await this.authRepo.deleteRefreshTokens(userId);
 
     return {

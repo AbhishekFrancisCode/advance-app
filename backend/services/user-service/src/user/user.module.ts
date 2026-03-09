@@ -3,9 +3,15 @@ import { UserController } from './user.controller';
 import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [
+    PrismaModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+    }),
+  ],
   controllers: [UserController],
   providers: [UserService, UserRepository],
 })

@@ -8,6 +8,7 @@ service UserService {
   rpc GetUserById (GetUserRequest) returns (UserProfileResponse);
   rpc UpdateUserProfile (UpdateUserRequest) returns (UserResponse);
   rpc GetUserByEmail (GetUserByEmailRequest) returns (UserProfileResponse);
+  rpc DeleteUser (GetUserRequest) returns (UserResponse);
 }
 
 message CreateUserRequest {

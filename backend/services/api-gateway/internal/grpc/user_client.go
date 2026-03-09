@@ -34,6 +34,7 @@ func NewUserClient() *UserClient {
 }
 
 func (u *UserClient) UpdateUserProfile(
+	ctx context.Context,
 	userID string,
 	name string,
 	phone string,
@@ -44,7 +45,7 @@ func (u *UserClient) UpdateUserProfile(
 ) (*pb.UserResponse, error) {
 
 	resp, err := u.Client.UpdateUserProfile(
-		context.Background(),
+		ctx,
 		&pb.UpdateUserRequest{
 			UserId:  userID,
 			Name:    name,
@@ -64,10 +65,10 @@ func (u *UserClient) UpdateUserProfile(
 }
 
 func (u *UserClient) GetUserDataByEmail(
-	email string,
+	ctx context.Context, email string,
 ) (*pb.UserProfileResponse, error) {
 	resp, err := u.Client.GetUserByEmail(
-		context.Background(),
+		ctx,
 		&pb.GetUserByEmailRequest{Email: email},
 	)
 	fmt.Println("responce grpc : ", resp)
@@ -78,14 +79,30 @@ func (u *UserClient) GetUserDataByEmail(
 	return resp, nil
 }
 
-func (u *UserClient) GetUserDataById(
+func (u *UserClient) GetUserDataById(ctx context.Context,
 	userID string,
 ) (*pb.UserProfileResponse, error) {
 	resp, err := u.Client.GetUserById(
-		context.Background(),
+		ctx,
 		&pb.GetUserRequest{UserId: userID},
 	)
 	fmt.Println("responce grpc : ", resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (u *UserClient) DeleteUser(ctx context.Context, userID string) (*pb.UserResponse, error) {
+
+	resp, err := u.Client.DeleteUser(
+		ctx,
+		&pb.GetUserRequest{
+			UserId: userID,
+		},
+	)
+
 	if err != nil {
 		return nil, err
 	}

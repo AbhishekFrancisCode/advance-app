@@ -22,4 +22,12 @@ export class UserService {
   async getUserDataById(data: UserIdDto) {
     return this.userRepository.findById(data.userId);
   }
+
+  async deleteUser(userId: string) {
+    await this.userRepository.deleteUser(userId);
+
+    return {
+      message: 'User deleted successfully',
+    };
+  }
 }

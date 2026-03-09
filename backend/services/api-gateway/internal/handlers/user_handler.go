@@ -19,6 +19,10 @@ type UpdateUserRequest struct {
 	Dob     string `json:"dob"`
 }
 
+type GetUserByEmailRequest struct {
+	Email string `json:"email"`
+}
+
 func UpdateUserProfile(c *gin.Context) {
 
 	var req UpdateUserRequest
@@ -31,8 +35,9 @@ func UpdateUserProfile(c *gin.Context) {
 
 	// example: user_id extracted from JWT middleware
 	userID := c.GetString("user_id")
-
+	ctx := utils.CreateGrpcContext(c)
 	resp, err := grpc.UserSvc.UpdateUserProfile(
+		ctx,
 		userID,
 		req.Name,
 		req.Phone,
@@ -50,10 +55,6 @@ func UpdateUserProfile(c *gin.Context) {
 	c.JSON(200, resp)
 }
 
-type GetUserByEmailRequest struct {
-	Email string `json:"email"`
-}
-
 func GetUserByEmail(c *gin.Context) {
 	var req GetUserByEmailRequest
 
@@ -63,8 +64,9 @@ func GetUserByEmail(c *gin.Context) {
 	}
 
 	email := c.GetString("email")
+	ctx := utils.CreateGrpcContext(c)
 
-	resp, err := grpc.UserSvc.GetUserDataByEmail(email)
+	resp, err := grpc.UserSvc.GetUserDataByEmail(ctx, email)
 
 	if err != nil {
 		utils.HandleGrpcError(c, err)
@@ -84,8 +86,8 @@ func GetUserById(c *gin.Context) {
 		})
 		return
 	}
-
-	resp, err := grpc.UserSvc.GetUserDataById(userID)
+	ctx := utils.CreateGrpcContext(c)
+	resp, err := grpc.UserSvc.GetUserDataById(ctx, userID)
 
 	if err != nil {
 		utils.HandleGrpcError(c, err)
@@ -94,4 +96,20 @@ func GetUserById(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 
+}
+
+func DeleteUser(c *gin.Context) {
+
+	userID := c.GetString("user_id")
+
+	ctx := utils.CreateGrpcContext(c)
+
+	resp, err := grpc.UserSvc.DeleteUser(ctx, userID)
+
+	if err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }

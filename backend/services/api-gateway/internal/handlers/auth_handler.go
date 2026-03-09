@@ -25,6 +25,10 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
+type LogoutRequest struct {
+	UserId string `json:"userId"`
+}
+
 // Login handles POST /auth/login
 // This endpoint forwards the request to Auth Service via gRPC
 func Login(c *gin.Context) {
@@ -119,5 +123,26 @@ func RefreshToken(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":     resp.Message,
 		"accessToken": resp.AccessToken,
+	})
+}
+
+func Logout(c *gin.Context) {
+	var req LogoutRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+
+	resp, err := grpc.AuthSvc.Client.Logout(
+		c, &authpb.LogoutRequest{
+			UserId: req.UserId,
+		})
+	if err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": resp.Message,
 	})
 }

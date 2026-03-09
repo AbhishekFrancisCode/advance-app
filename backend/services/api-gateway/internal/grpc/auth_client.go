@@ -82,3 +82,19 @@ func (a *AuthClient) RefreshToken(refreshToken string) (*authpb.RefreshResponse,
 
 	return resp, nil
 }
+
+// Logout calls Auth Services RPC
+func (a *AuthClient) Logout(userId string) (*authpb.MessageResponse, error) {
+	resp, err := a.Client.Logout(
+		context.Background(),
+		&authpb.LogoutRequest{
+			UserId: userId,
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}

@@ -25,4 +25,10 @@ export class AuthController {
     console.log('refresh hit 1', data.refreshToken);
     return this.authService.refresh(data.refreshToken);
   }
+
+  @GrpcMethod('AuthService', 'Logout')
+  logout(data: { userId: string }) {
+    console.log('Delete refresh hit 1', data.userId);
+    return this.authService.logout(data.userId);
+  }
 }

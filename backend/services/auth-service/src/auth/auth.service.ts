@@ -164,4 +164,13 @@ export class AuthService implements OnModuleInit {
       throw new RpcException('Refresh token expired. Please login again.');
     }
   }
+
+  async logout(userId: string) {
+    console.log('Delete refresh hit 2', userId);
+    await this.authRepo.deleteRefreshTokens(userId);
+
+    return {
+      message: 'logged out successfully',
+    };
+  }
 }

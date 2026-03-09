@@ -6,6 +6,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { EmailDto, UserIdDto } from './dto/user-profile.dto';
 import { JwtService } from '@nestjs/jwt';
 import { GrpcJwtGuard } from 'src/common/guards/grpc-jwt.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
 
 @Controller()
 export class UserController {
@@ -39,7 +41,8 @@ export class UserController {
   }
 
   @GrpcMethod('UserService', 'DeleteUser')
-  @UseGuards(GrpcJwtGuard)
+  @UseGuards(GrpcJwtGuard, RolesGuard)
+  @Roles('admin')
   deleteUser(data: { userId: string }) {
     return this.userService.deleteUser(data.userId);
   }

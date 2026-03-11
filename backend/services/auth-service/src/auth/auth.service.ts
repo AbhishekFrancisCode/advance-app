@@ -45,8 +45,6 @@ export class AuthService implements OnModuleInit {
   }
 
   async register(dto: RegisterDto) {
-    console.log('Register hit 1');
-
     const existing = await this.authRepo.findByEmail(dto.email);
 
     if (existing) {
@@ -61,7 +59,6 @@ export class AuthService implements OnModuleInit {
     });
 
     try {
-      console.log('Register hit 2', user.id, dto.name, dto.phone);
       await firstValueFrom(
         this.userService.CreateUserProfile({
           userId: user.id,
@@ -71,53 +68,49 @@ export class AuthService implements OnModuleInit {
       );
     } catch (err) {
       await this.authRepo.deleteUser(user.id);
-      console.log('User profile error:', err);
+      console.log(err);
       throw new RpcException('User profile creation failed');
     }
 
     try {
-      console.log('Register hit 3 Kafka');
+      const payload = {
+        sub: user.id,
+        email: user.email,
+      };
+
+      const accessToken = this.jwtService.sign(payload, {
+        expiresIn: '15m',
+      });
+
+      const refreshToken = this.jwtService.sign(payload, {
+        expiresIn: '7d',
+      });
+
+      const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
+      await this.authRepo.createRefreshToken(user.id, hashedRefreshToken, {
+        userAgent: dto.userAgent,
+        ipAddress: dto.ipAddress,
+        device: getDeviceType(dto.userAgent),
+      });
+
+      // Publish event after successful registration
       await publishUserRegisteredEvent({
         userId: user.id,
         email: dto.email,
         name: dto.name,
       });
-      // this.kafkaClient.emit('user.created', {
-      //   userId: user.id,
-      //   email: user.email,
-      //   name: dto.name,
-      //   phone: dto.phone,
-      // });
-    } catch (err) {
-      console.log(err);
+
+      return {
+        message: 'User registered successfully',
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+      console.error('Registration finalization failed', error);
+
+      throw new RpcException('Registration failed');
     }
-
-    const payload = {
-      sub: user.id,
-      email: user.email,
-    };
-
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: '15m',
-    });
-
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
-    });
-
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-
-    await this.authRepo.createRefreshToken(user.id, hashedRefreshToken, {
-      userAgent: dto.userAgent,
-      ipAddress: dto.ipAddress,
-      device: getDeviceType(dto.userAgent),
-    });
-
-    return {
-      message: 'User registered successfully',
-      accessToken,
-      refreshToken,
-    };
   }
 
   async login(dto: LoginDto) {

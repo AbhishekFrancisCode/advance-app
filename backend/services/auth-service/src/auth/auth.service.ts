@@ -66,8 +66,9 @@ export class AuthService implements OnModuleInit {
           phone: dto.phone,
         }),
       );
-    } catch {
+    } catch (err) {
       // await this.authRepo.deleteUser(user.id);
+      console.log('User profile error:', err);
       throw new RpcException('User profile creation failed');
     }
 

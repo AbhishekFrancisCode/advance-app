@@ -1,0 +1,36 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+    - ./db-init:/docker-entrypoint-initdb.d
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    container_name: auth-service
+    ports:
+      - "50051:50051"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    container_name: user-service
+    ports:
+      - "50052:50052"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres

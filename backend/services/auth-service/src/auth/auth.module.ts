@@ -23,7 +23,8 @@ import { join } from 'path';
         options: {
           package: 'user',
           protoPath: join(process.cwd(), '../../proto/user.proto'),
-          url: 'localhost:50052',
+          // url: 'localhost:50052',
+          url: 'user-service:50052', //docker
         },
       },
     ]),

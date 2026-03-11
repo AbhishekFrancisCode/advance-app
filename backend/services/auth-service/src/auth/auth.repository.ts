@@ -93,4 +93,12 @@ export class AuthRepository {
       },
     });
   }
+
+  async deleteUser(userId: string) {
+    return this.prisma.refreshToken.deleteMany({
+      where: {
+        userId: userId,
+      },
+    });
+  }
 }

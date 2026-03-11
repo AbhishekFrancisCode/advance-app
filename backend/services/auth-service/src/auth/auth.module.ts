@@ -28,6 +28,17 @@ import { join } from 'path';
         },
       },
     ]),
+    ClientsModule.register([
+      {
+        name: 'KAFKA_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            brokers: ['kafka:9092'],
+          },
+        },
+      },
+    ]),
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthRepository, JwtGuard],

@@ -15,4 +15,4 @@ COPY . .
 
 EXPOSE 50051
 
-CMD sh -c "sleep 5 && cd services/auth-service && npx prisma migrate deploy && pnpm start:dev"
+CMD sh -c "cd services/auth-service && npx prisma migrate deploy && pnpm start:dev"

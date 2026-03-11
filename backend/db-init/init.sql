@@ -1,2 +1,3 @@
 CREATE DATABASE authdb;
 CREATE DATABASE userdb;
+CREATE DATABASE notificationdb;

@@ -1,4 +1,39 @@
 import { Injectable } from '@nestjs/common';
+import { sendWelcomeEmail } from '../email/email.service';
+import { CreateNotificationDto } from './dto/create-notification.dto';
+import { NotificationRepository } from './notification.repository';
 
 @Injectable()
-export class NotificationService {}
+export class NotificationService {
+  constructor(private readonly notificationRepo: NotificationRepository) {}
+
+  async handleUserRegistered(userId: string, email: string, name: string) {
+    console.log('notificationRepo:>', this.notificationRepo);
+    try {
+      await sendWelcomeEmail({
+        email,
+        name,
+      });
+
+      const dto: CreateNotificationDto = {
+        userId,
+        type: 'WELCOME_EMAIL',
+        message: `Welcome email sent to ${email}`,
+        status: 'SUCCESS',
+      };
+
+      await this.notificationRepo.createNotification(dto);
+    } catch (error) {
+      const dto: CreateNotificationDto = {
+        userId,
+        type: 'WELCOME_EMAIL',
+        message: `Failed to send welcome email to ${email}`,
+        status: 'FAILED',
+      };
+
+      await this.notificationRepo.createNotification(dto);
+
+      console.error('Email failed:', error);
+    }
+  }
+}

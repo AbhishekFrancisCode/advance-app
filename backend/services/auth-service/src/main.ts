@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { join } from 'path';
+import { connectProducer } from './kafka/kafka.producer';
 
 async function bootstrap() {
   const protoPath = join(process.cwd(), '../../proto/auth.proto');
@@ -18,7 +19,8 @@ async function bootstrap() {
       },
     },
   );
-
+  // connect kafka producer
+  await connectProducer();
   await app.listen();
 }
 bootstrap();

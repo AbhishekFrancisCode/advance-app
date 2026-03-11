@@ -6,10 +6,11 @@ import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { RpcException } from '@nestjs/microservices/exceptions/rpc-exception';
 import { JwtService } from '@nestjs/jwt';
-import type { ClientGrpc, ClientKafka } from '@nestjs/microservices';
+import type { ClientGrpc } from '@nestjs/microservices';
 
 import { firstValueFrom, Observable } from 'rxjs';
 import getDeviceType from 'src/utils/device-type';
+import { publishUserRegisteredEvent } from 'src/kafka/kafka.producer';
 
 interface UserService {
   CreateUserProfile(data: {
@@ -35,12 +36,12 @@ export class AuthService implements OnModuleInit {
     private readonly authRepo: AuthRepository,
     private readonly jwtService: JwtService,
     @Inject('USER_PACKAGE') private client: ClientGrpc,
-    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
+    // @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     this.userService = this.client.getService<UserService>('UserService');
-    await this.kafkaClient.connect();
+    // await this.kafkaClient.connect();
   }
 
   async register(dto: RegisterDto) {
@@ -76,12 +77,17 @@ export class AuthService implements OnModuleInit {
 
     try {
       console.log('Register hit 3 Kafka');
-      this.kafkaClient.emit('user.created', {
+      await publishUserRegisteredEvent({
         userId: user.id,
-        email: user.email,
+        email: dto.email,
         name: dto.name,
-        phone: dto.phone,
       });
+      // this.kafkaClient.emit('user.created', {
+      //   userId: user.id,
+      //   email: user.email,
+      //   name: dto.name,
+      //   phone: dto.phone,
+      // });
     } catch (err) {
       console.log(err);
     }

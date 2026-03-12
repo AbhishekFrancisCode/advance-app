@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { sendWelcomeEmail } from '../email/email.service';
+import { sendDiscountEmail, sendWelcomeEmail } from '../email/email.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationRepository } from './notification.repository';
 
@@ -35,5 +35,25 @@ export class NotificationService {
 
       console.error('Email failed:', error);
     }
+  }
+
+  async sendDiscountNotification(
+    userId: string,
+    email: string,
+    code: string,
+    percentage: number,
+  ) {
+    await sendDiscountEmail({
+      email,
+      code,
+      percentage,
+    });
+
+    await this.notificationRepo.createNotification({
+      userId,
+      type: 'DISCOUNT_EMAIL',
+      message: `Discount email sent: ${code}`,
+      status: 'SUCCESS',
+    });
   }
 }

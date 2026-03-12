@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
-import { WelcomeEmailPayload } from '../types/email.types';
+import {
+  DiscountEmailPayload,
+  WelcomeEmailPayload,
+} from '../types/email.types';
 
 /**
  * Create SMTP transporter
@@ -27,5 +30,18 @@ export async function sendWelcomeEmail(
     to: email,
     subject: 'Welcome!',
     text: `Hello ${name}, welcome to our platform!`,
+  });
+}
+
+export async function sendDiscountEmail(
+  payload: DiscountEmailPayload,
+): Promise<void> {
+  const { email, code } = payload;
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Welcome!',
+    text: `Hello ${code}, welcome to our platform!`,
   });
 }

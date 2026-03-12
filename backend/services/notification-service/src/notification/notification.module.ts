@@ -5,9 +5,10 @@ import { NotificationRepository } from './notification.repository';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { DiscountHandler } from 'src/kafka/handlers/discount.handler';
 import { UserRegisteredHandler } from 'src/kafka/handlers/user-registered.handler';
-import { KafkaConsumerService } from 'src/kafka/kafka-consumer.services';
-import { EventRouterService } from 'src/kafka/kafka-router.service';
+import { KafkaConsumerService } from 'src/kafka/services/kafka-consumer.services';
+import { EventRouterService } from 'src/kafka/services/kafka-router.service';
 import { DiscoveryModule } from '@nestjs/core';
+import { DlqConsumerService } from 'src/kafka/dlq/dlq-consumer.service';
 
 @Module({
   imports: [PrismaModule, DiscoveryModule],
@@ -21,6 +22,7 @@ import { DiscoveryModule } from '@nestjs/core';
 
     UserRegisteredHandler,
     DiscountHandler,
+    DlqConsumerService,
   ],
   exports: [NotificationService],
 })

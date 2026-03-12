@@ -23,4 +23,8 @@ async function bootstrap() {
   await connectProducer();
   await app.listen();
 }
-bootstrap();
+bootstrap()
+  .then(() => console.log('Auth Service started'))
+  .catch((err) => {
+    console.error('Bootstrap failed', err);
+  });

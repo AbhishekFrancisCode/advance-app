@@ -5,4 +5,8 @@ async function bootstrap() {
   const app = await NestFactory.createMicroservice(AppModule);
   await app.listen();
 }
-bootstrap();
+bootstrap()
+  .then(() => console.log('Notification Service started'))
+  .catch((err) => {
+    console.error('Bootstrap failed', err);
+  });

@@ -21,4 +21,8 @@ async function bootstrap() {
 
   await app.listen();
 }
-bootstrap();
+bootstrap()
+  .then(() => console.log('User Service started'))
+  .catch((err) => {
+    console.error('Bootstrap failed', err);
+  });

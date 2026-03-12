@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
-import { KAFKA_EVENT } from './decorators/kafka-event.decorator';
-import { KafkaEventHandler } from './event-handler.interface';
+import { KAFKA_EVENT } from '../decorators/kafka-event.decorator';
+import { KafkaEventHandler } from '../event-handler.interface';
 
 @Injectable()
 export class EventRouterService implements OnModuleInit {

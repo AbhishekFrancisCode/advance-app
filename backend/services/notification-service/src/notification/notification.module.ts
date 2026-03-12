@@ -9,9 +9,11 @@ import { KafkaConsumerService } from 'src/kafka/services/kafka-consumer.services
 import { EventRouterService } from 'src/kafka/services/kafka-router.service';
 import { DiscoveryModule } from '@nestjs/core';
 import { DlqConsumerService } from 'src/kafka/dlq/dlq-consumer.service';
+import { KafkaModule } from 'src/kafka/kafka.module';
+import { DlqProducer } from 'src/kafka/dlq/dlq.producer';
 
 @Module({
-  imports: [PrismaModule, DiscoveryModule],
+  imports: [PrismaModule, DiscoveryModule, KafkaModule],
   controllers: [NotificationController],
   providers: [
     NotificationService,
@@ -22,6 +24,8 @@ import { DlqConsumerService } from 'src/kafka/dlq/dlq-consumer.service';
 
     UserRegisteredHandler,
     DiscountHandler,
+
+    DlqProducer,
     DlqConsumerService,
   ],
   exports: [NotificationService],

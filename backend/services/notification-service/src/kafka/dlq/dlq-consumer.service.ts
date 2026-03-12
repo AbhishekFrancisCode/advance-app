@@ -1,26 +1,28 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Kafka } from 'kafkajs';
+import { KafkaDLQEvents } from '../kafka.events';
+import { KafkaConfig } from '../kafka.config';
 
 @Injectable()
 export class DlqConsumerService implements OnModuleInit {
   async onModuleInit() {
     const kafka = new Kafka({
-      clientId: 'notification-service-dlq',
-      brokers: ['kafka:9092'],
+      clientId: KafkaConfig.dlqClientid,
+      brokers: KafkaConfig.brokers,
     });
 
     const consumer = kafka.consumer({
-      groupId: 'notification-dlq-group',
+      groupId: KafkaConfig.consumerGroups.DLQ,
     });
 
     await consumer.connect();
 
     await consumer.subscribe({
-      topic: 'user_registered_dlq',
+      topic: KafkaDLQEvents.USER_REGISTERED_DLQ,
     });
 
     await consumer.subscribe({
-      topic: 'discount_notification_dlq',
+      topic: KafkaDLQEvents.DISCOUNT_NOTIFICATION_DLQ,
     });
 
     await consumer.run({

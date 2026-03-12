@@ -1,23 +1,31 @@
-import { Kafka } from 'kafkajs';
+import { Injectable } from '@nestjs/common';
+import { KafkaService } from '../kafka.service';
+import { Producer } from 'kafkajs';
 
-const kafka = new Kafka({
-  clientId: 'notification-service',
-  brokers: ['kafka:9092'],
-});
+@Injectable()
+export class DlqProducer {
+  private producer: Producer;
+  private isConnected = false;
 
-const producer = kafka.producer();
+  constructor(private kafkaService: KafkaService) {
+    this.producer = this.kafkaService.createProducer();
+  }
 
-export async function publishToDLQ(topic: string, payload: unknown) {
-  await producer.connect();
+  async publish(topic: string, payload: unknown) {
+    if (!this.isConnected) {
+      await this.producer.connect();
+      this.isConnected = true;
+    }
 
-  await producer.send({
-    topic: `${topic}_dlq`,
-    messages: [
-      {
-        value: JSON.stringify(payload),
-      },
-    ],
-  });
+    await this.producer.send({
+      topic: `${topic}_dlq`,
+      messages: [
+        {
+          value: JSON.stringify(payload),
+        },
+      ],
+    });
 
-  console.log(`Event moved to DLQ: ${topic}_dlq`);
+    console.log(`Event moved to DLQ: ${topic}_dlq`);
+  }
 }

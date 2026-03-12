@@ -1,34 +1,35 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Kafka } from 'kafkajs';
 import { EventRouterService } from './kafka-router.service';
-import { publishToDLQ } from '../dlq/dlq.producer';
+import { KafkaService } from '../kafka.service';
+import { DlqProducer } from '../dlq/dlq.producer';
+import { KafkaEvents } from '../kafka.events';
+import { KafkaConfig } from '../kafka.config';
 
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit {
-  constructor(private eventRouter: EventRouterService) {}
+  constructor(
+    private eventRouter: EventRouterService,
+    private kafkaService: KafkaService,
+    private dlqProducer: DlqProducer,
+  ) {}
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async onModuleInit() {
-    const kafka = new Kafka({
-      clientId: 'notification-service',
-      brokers: ['kafka:9092'],
-    });
-
-    const consumer = kafka.consumer({
-      groupId: 'notification-group',
-    });
+    const consumer = this.kafkaService.createConsumer(
+      KafkaConfig.consumerGroups.NOTIFICATION,
+    );
 
     await consumer.connect();
 
     await consumer.subscribe({
-      topic: 'user_registered',
+      topic: KafkaEvents.USER_REGISTERED,
     });
 
     await consumer.subscribe({
-      topic: 'discount_notification',
+      topic: KafkaEvents.DISCOUNT_NOTIFICATION,
     });
 
     const RETRY_DELAYS = [1000, 5000, 15000];
@@ -46,7 +47,7 @@ export class KafkaConsumerService implements OnModuleInit {
           } catch (error) {
             if (attempt === RETRY_DELAYS.length) {
               console.error('Retries exhausted. Sending to DLQ');
-              await publishToDLQ(topic, payload);
+              await this.dlqProducer.publish(topic, payload);
               return;
             }
 

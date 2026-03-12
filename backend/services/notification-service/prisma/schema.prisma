@@ -22,3 +22,11 @@ model Notification {
   status    String
   createdAt DateTime @default(now())
 }
+
+model DeadLetterEvent {
+  id        String   @id @default(uuid())
+  topic     String
+  payload   Json
+  error     String?
+  createdAt DateTime @default(now())
+}

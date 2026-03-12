@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { sendDiscountEmail, sendWelcomeEmail } from '../email/email.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationRepository } from './notification.repository';
+import { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class NotificationService {
@@ -55,6 +56,19 @@ export class NotificationService {
       type: 'DISCOUNT_EMAIL',
       message: `Discount email sent: ${code}`,
       status: 'SUCCESS',
+    });
+  }
+
+  async handleDLQEvent(data: {
+    topic: string;
+    payload: Prisma.InputJsonValue;
+    error?: string;
+  }) {
+    console.log('handleDLQEvent:> hit');
+    await this.notificationRepo.createDlqEvent({
+      topic: data.topic,
+      payload: data.payload,
+      error: 'Retries exhausted',
     });
   }
 }

@@ -2,9 +2,13 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Kafka } from 'kafkajs';
 import { KafkaDLQEvents } from '../kafka.events';
 import { KafkaConfig } from '../kafka.config';
+import { NotificationService } from 'src/notification/notification.service';
+import { Prisma } from '../../../generated/prisma';
 
 @Injectable()
 export class DlqConsumerService implements OnModuleInit {
+  constructor(private readonly notificationService: NotificationService) {}
+
   async onModuleInit() {
     const kafka = new Kafka({
       clientId: KafkaConfig.dlqClientid,
@@ -32,10 +36,11 @@ export class DlqConsumerService implements OnModuleInit {
         console.error('DLQ EVENT RECEIVED:', topic);
         console.error(await payload);
 
-        // future options:
-        // save to DB
-        // send alert
-        // retry event
+        await this.notificationService.handleDLQEvent({
+          topic,
+          payload: payload as Prisma.InputJsonValue,
+          error: 'Retries exhausted',
+        });
       },
     });
   }

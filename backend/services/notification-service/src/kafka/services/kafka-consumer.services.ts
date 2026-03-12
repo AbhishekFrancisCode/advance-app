@@ -7,6 +7,10 @@ import { publishToDLQ } from '../dlq/dlq.producer';
 export class KafkaConsumerService implements OnModuleInit {
   constructor(private eventRouter: EventRouterService) {}
 
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async onModuleInit() {
     const kafka = new Kafka({
       clientId: 'notification-service',
@@ -27,7 +31,7 @@ export class KafkaConsumerService implements OnModuleInit {
       topic: 'discount_notification',
     });
 
-    const MAX_RETRIES = 3;
+    const RETRY_DELAYS = [1000, 5000, 15000];
 
     await consumer.run({
       eachMessage: async ({ topic, message }) => {
@@ -35,20 +39,27 @@ export class KafkaConsumerService implements OnModuleInit {
 
         console.log('Kafka event received:', topic);
 
-        let attempt = 0;
-
-        while (attempt < MAX_RETRIES) {
+        for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
           try {
             await this.eventRouter.route(topic, payload);
             return;
           } catch (error) {
-            attempt++;
-            console.error(`Retry ${attempt} failed`, error);
+            if (attempt === RETRY_DELAYS.length) {
+              console.error('Retries exhausted. Sending to DLQ');
+              await publishToDLQ(topic, payload);
+              return;
+            }
+
+            const delay = RETRY_DELAYS[attempt];
+
+            console.error(
+              `Retry ${attempt + 1} failed. Retrying in ${delay}ms`,
+              error,
+            );
+
+            await this.sleep(delay);
           }
         }
-
-        // retries exhausted → send to DLQ
-        await publishToDLQ(topic, payload);
       },
     });
   }

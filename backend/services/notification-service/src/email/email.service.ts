@@ -24,13 +24,18 @@ export async function sendWelcomeEmail(
   payload: WelcomeEmailPayload,
 ): Promise<void> {
   const { email, name } = payload;
-
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Welcome!',
-    text: `Hello ${name}, welcome to our platform!`,
-  });
+  try {
+    console.log('Sending welcome email...');
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Welcome!',
+      text: `Hello ${name}, welcome to our platform!`,
+    });
+  } catch (error) {
+    console.error('Email failed', error);
+    throw error;
+  }
 }
 
 export async function sendDiscountEmail(

@@ -12,6 +12,7 @@ export class DlqProducer {
   }
 
   async publish(topic: string, payload: unknown) {
+    console.error('dlqProducer', topic, payload);
     if (!this.isConnected) {
       await this.producer.connect();
       this.isConnected = true;

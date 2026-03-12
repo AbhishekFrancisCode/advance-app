@@ -11,6 +11,7 @@ export class UserRegisteredHandler implements KafkaEventHandler<UserRegisteredEv
   constructor(private notificationService: NotificationService) {}
 
   async handle(data: UserRegisteredEvent) {
+    console.log('UserRegisteredHandler triggered');
     await this.notificationService.handleUserRegistered(
       data.userId,
       data.email,

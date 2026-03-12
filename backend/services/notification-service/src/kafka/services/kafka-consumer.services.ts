@@ -42,21 +42,28 @@ export class KafkaConsumerService implements OnModuleInit {
 
         for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
           try {
+            console.log(`Processing event. Attempt: ${attempt + 1}`);
+
             await this.eventRouter.route(topic, payload);
+
+            console.log('Event processed successfully');
             return;
           } catch (error) {
+            console.error(`Attempt ${attempt + 1} failed`, error);
+
             if (attempt === RETRY_DELAYS.length) {
               console.error('Retries exhausted. Sending to DLQ');
+
               await this.dlqProducer.publish(topic, payload);
+
               return;
             }
+            //avoid jitter
+            const baseDelay = RETRY_DELAYS[attempt];
+            const jitter = Math.random() * 1000;
+            const delay = baseDelay + jitter;
 
-            const delay = RETRY_DELAYS[attempt];
-
-            console.error(
-              `Retry ${attempt + 1} failed. Retrying in ${delay}ms`,
-              error,
-            );
+            console.log(`Retrying in ${delay}ms`);
 
             await this.sleep(delay);
           }

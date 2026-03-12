@@ -8,7 +8,7 @@ export class NotificationService {
   constructor(private readonly notificationRepo: NotificationRepository) {}
 
   async handleUserRegistered(userId: string, email: string, name: string) {
-    console.log('notificationRepo:>', this.notificationRepo);
+    console.log('notificationRepo:> hit');
     try {
       await sendWelcomeEmail({
         email,
@@ -34,6 +34,7 @@ export class NotificationService {
       await this.notificationRepo.createNotification(dto);
 
       console.error('Email failed:', error);
+      throw error;
     }
   }
 

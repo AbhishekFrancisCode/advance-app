@@ -28,4 +28,23 @@ export class NotificationRepository {
       },
     });
   }
+
+  async findNotificationsByUser(userId: string) {
+    return this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getDlqEvents() {
+    return this.prisma.deadLetterEvent.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getDlqEventById(id: string) {
+    return this.prisma.deadLetterEvent.findUnique({
+      where: { id },
+    });
+  }
 }

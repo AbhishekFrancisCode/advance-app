@@ -21,6 +21,7 @@ func main() {
 	// Register user routes
 	routes.RegisterUserRoutes(router)
 	routes.RegisterAuthRoutes(router)
+	routes.NotificationRoutes(router)
 
 	// Start API Gateway server on port 8080
 	router.Run(":8080")

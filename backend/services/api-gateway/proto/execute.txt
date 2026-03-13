@@ -21,7 +21,7 @@ protoc \
 
 **********************************************
 
-to create grcp auth.proto
+to create grcp notification.proto
 backend/services/api-gateway
 │
 ├ proto
@@ -40,3 +40,25 @@ protoc \
 --go_opt=module=api-gateway \
 --go-grpc_opt=module=api-gateway \
 ../../proto/auth.proto
+
+**********************************************
+
+to create grcp notification.proto
+backend/services/api-gateway
+│
+├ proto
+│   └ notification
+│       ├ notification.pb.go
+│       └ notification_grpc.pb.go
+│
+└ internal
+
+run below code :
+
+protoc \
+-I ../../proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=module=api-gateway \
+--go-grpc_opt=module=api-gateway \
+../../proto/notification.proto

@@ -1,12 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { sendDiscountEmail, sendWelcomeEmail } from '../email/email.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationRepository } from './notification.repository';
 import { Prisma } from 'generated/prisma/client';
+import { KafkaService } from 'src/kafka/kafka.service';
+import { Producer } from 'kafkajs';
 
 @Injectable()
-export class NotificationService {
-  constructor(private readonly notificationRepo: NotificationRepository) {}
+export class NotificationService implements OnModuleInit {
+  private producer: Producer;
+  constructor(
+    private readonly notificationRepo: NotificationRepository,
+    private readonly kafkaService: KafkaService,
+  ) {}
+
+  async onModuleInit() {
+    this.producer = this.kafkaService.createProducer();
+    await this.producer.connect();
+  }
 
   async handleUserRegistered(userId: string, email: string, name: string) {
     console.log('notificationRepo:> hit');
@@ -70,5 +81,34 @@ export class NotificationService {
       payload: data.payload,
       error: 'Retries exhausted',
     });
+  }
+
+  async getNotifications(userId: string) {
+    return this.notificationRepo.findNotificationsByUser(userId);
+  }
+
+  async getDlqEvents() {
+    return this.notificationRepo.getDlqEvents();
+  }
+
+  async replayDlqEvent(id: string) {
+    const event = await this.notificationRepo.getDlqEventById(id);
+
+    if (!event) {
+      throw new Error('DLQ event not found');
+    }
+
+    const originalTopic = event.topic.replace('_dlq', '');
+
+    await this.producer.send({
+      topic: originalTopic,
+      messages: [
+        {
+          value: JSON.stringify(event.payload),
+        },
+      ],
+    });
+
+    console.log(`Replayed DLQ event ${id}`);
   }
 }

@@ -43,8 +43,16 @@ export class NotificationRepository {
   }
 
   async getDlqEventById(id: string) {
+    console.log('Repo ReplayDlqEvent hit', id);
     return this.prisma.deadLetterEvent.findUnique({
       where: { id },
+    });
+  }
+
+  async updateStatus(id: string, status: string) {
+    return this.prisma.deadLetterEvent.update({
+      where: { id },
+      data: { status },
     });
   }
 }

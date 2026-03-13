@@ -28,5 +28,6 @@ model DeadLetterEvent {
   topic     String
   payload   Json
   error     String?
+  status    String   @default("PENDING")
   createdAt DateTime @default(now())
 }

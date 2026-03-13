@@ -13,7 +13,6 @@ export class NotificationController {
 
   @GrpcMethod('NotificationService', 'GetNotifications')
   async getNotifications(data: { userId: string }) {
-    console.log('notification hit', data);
     const notifications = await this.notificationService.getNotifications(
       data.userId,
     );

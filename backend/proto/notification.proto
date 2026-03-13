@@ -34,7 +34,9 @@ message GetNotificationsResponse {
   repeated Notification notifications = 1;
 }
 
-message GetDlqEventsRequest {}
+message GetDlqEventsRequest {
+   string userId = 1;
+}
 
 message GetDlqEventsResponse {
   repeated DeadLetterEvent events = 1;

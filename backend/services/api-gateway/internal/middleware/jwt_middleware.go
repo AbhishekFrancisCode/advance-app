@@ -93,7 +93,7 @@ func JWTMiddleware() gin.HandlerFunc {
 		// STEP 5: Store authenticated user identity in request context
 		// This allows handlers to access the logged-in user
 		c.Set("user_id", userID)
-
+		c.Set("role", claims["role"].(string))
 		// STEP 6: Allow request to continue to the handler
 		c.Next()
 	}

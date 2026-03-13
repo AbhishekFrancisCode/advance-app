@@ -42,3 +42,27 @@ func (n *NotificationClient) GetNotifications(
 
 	return resp, nil
 }
+
+func (n *NotificationClient) GetDlqEvents(
+	ctx context.Context,
+	userID string,
+) (*pb.GetDlqEventsResponse, error) {
+	resp, err := n.Client.GetDlqEvents(ctx, &pb.GetDlqEventsRequest{UserId: userID})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (n *NotificationClient) ReplayDlqEvent(
+	ctx context.Context,
+	id string,
+) (*pb.ReplayDlqEventResponse, error) {
+	resp, err := n.Client.ReplayDlqEvent(ctx, &pb.ReplayDlqEventRequest{Id: id})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}

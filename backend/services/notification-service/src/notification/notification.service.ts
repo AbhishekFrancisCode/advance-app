@@ -97,17 +97,21 @@ export class NotificationService implements OnModuleInit {
     if (!event) {
       throw new Error('DLQ event not found');
     }
-
-    const originalTopic = event.topic.replace('_dlq', '');
-
-    await this.producer.send({
-      topic: originalTopic,
-      messages: [
-        {
-          value: JSON.stringify(event.payload),
-        },
-      ],
-    });
+    try {
+      const originalTopic = event.topic.replace('_dlq', '');
+      await this.producer.send({
+        topic: originalTopic,
+        messages: [
+          {
+            value: JSON.stringify(event.payload),
+          },
+        ],
+      });
+      await this.notificationRepo.updateStatus(id, 'REPLAYED');
+    } catch (error) {
+      await this.notificationRepo.updateStatus(id, 'FAILED');
+      throw error;
+    }
 
     console.log(`Replayed DLQ event ${id}`);
   }

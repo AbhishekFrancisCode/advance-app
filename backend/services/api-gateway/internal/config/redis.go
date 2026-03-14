@@ -12,7 +12,7 @@ var Ctx = context.Background()
 func InitRedis() *redis.Client {
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379", // docker service name
+		Addr:     "redis:6379", // docker service name
 		Password: "",
 		DB:       0,
 	})

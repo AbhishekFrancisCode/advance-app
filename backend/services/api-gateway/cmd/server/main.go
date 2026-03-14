@@ -20,6 +20,8 @@ func main() {
 	router.Use(middleware.RequestLogger())
 	// router.Use(middleware.JWTMiddleware())
 
+	// Debug route to test load balancing
+	routes.RegisterDebugRoutes(router)
 	// Register user routes
 	routes.RegisterUserRoutes(router)
 	routes.RegisterAuthRoutes(router)

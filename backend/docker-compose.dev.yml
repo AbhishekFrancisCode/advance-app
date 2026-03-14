@@ -1,5 +1,4 @@
 services:
-
   postgres:
     image: postgres:15
     container_name: postgres
@@ -35,7 +34,7 @@ services:
       - .:/app
     depends_on:
       - postgres
-  
+
   notification-service:
     build:
       context: .
@@ -71,6 +70,11 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:

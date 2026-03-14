@@ -15,6 +15,8 @@ func RateLimiter(redisClient *redis.Client, limit int, window time.Duration) gin
 
 		ctx := context.Background()
 
+		//proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		//use above cmd in nginix.conf for reading correct client IP
 		ip := c.ClientIP()
 
 		key := "rate_limit:ip:" + ip

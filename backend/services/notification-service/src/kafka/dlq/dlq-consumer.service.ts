@@ -4,6 +4,7 @@ import { KafkaDLQEvents } from '../kafka.events';
 import { KafkaConfig } from '../kafka.config';
 import { NotificationService } from 'src/notification/notification.service';
 import { Prisma } from '../../../generated/prisma';
+import { logger } from 'src/common/logger/logger';
 
 @Injectable()
 export class DlqConsumerService implements OnModuleInit {
@@ -31,14 +32,19 @@ export class DlqConsumerService implements OnModuleInit {
 
     await consumer.run({
       eachMessage: async ({ topic, message }) => {
-        const payload: unknown = JSON.parse(message.value!.toString());
+        const raw = message.value?.toString() ?? '{}';
+        const parsed: unknown = JSON.parse(raw);
 
-        console.error('DLQ EVENT RECEIVED:', topic);
-        console.error(await payload);
+        const payload = parsed as Prisma.InputJsonValue;
+
+        logger.error({
+          msg: 'DLQ event received',
+          topic,
+        });
 
         await this.notificationService.handleDLQEvent({
           topic,
-          payload: payload as Prisma.InputJsonValue,
+          payload,
           error: 'Retries exhausted',
         });
       },

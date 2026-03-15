@@ -4,6 +4,8 @@ import { KafkaService } from '../kafka.service';
 import { DlqProducer } from '../dlq/dlq.producer';
 import { KafkaEvents } from '../kafka.events';
 import { KafkaConfig } from '../kafka.config';
+import { logger } from 'src/common/logger/logger';
+import { UserRegisteredEvent } from 'src/types/types';
 
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit {
@@ -36,13 +38,28 @@ export class KafkaConsumerService implements OnModuleInit {
 
     await consumer.run({
       eachMessage: async ({ topic, message }) => {
-        const payload: unknown = JSON.parse(message.value!.toString());
+        const raw = message.value?.toString() ?? '{}';
+        const parsed: unknown = JSON.parse(raw);
+        const payload = parsed as UserRegisteredEvent;
+
+        logger.info({
+          requestId: payload.requestId,
+          msg: 'received kafka event',
+          topic,
+          email: payload.email,
+        });
 
         console.log('Kafka event received:', topic);
 
         for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
           try {
             console.log(`Processing event. Attempt: ${attempt + 1}`);
+            logger.info({
+              requestId: payload.requestId,
+              topic,
+              attempt: attempt + 1,
+              msg: 'processing kafka event',
+            });
 
             await this.eventRouter.route(topic, payload);
 
@@ -58,7 +75,7 @@ export class KafkaConsumerService implements OnModuleInit {
 
               return;
             }
-            //avoid jitter
+
             const baseDelay = RETRY_DELAYS[attempt];
             const jitter = Math.random() * 1000;
             const delay = baseDelay + jitter;

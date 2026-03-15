@@ -1,4 +1,6 @@
 import { Kafka } from 'kafkajs';
+import { logger } from 'src/common/logger/logger';
+import { getRequestId } from 'src/common/request-context';
 
 const kafka = new Kafka({
   clientId: 'auth-service',
@@ -16,12 +18,24 @@ export async function publishUserRegisteredEvent(data: {
   email: string;
   name: string;
 }) {
+  const requestId = getRequestId();
+
+  const event = {
+    requestId,
+    ...data,
+  };
   await producer.send({
     topic: 'user_registered',
     messages: [
       {
-        value: JSON.stringify(data),
+        value: JSON.stringify(event),
       },
     ],
+  });
+  logger.info({
+    msg: 'published user_registered event',
+    requestId,
+    userId: data.userId,
+    email: data.email,
   });
 }

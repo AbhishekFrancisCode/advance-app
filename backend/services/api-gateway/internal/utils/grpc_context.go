@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"api-gateway/pkg/logger"
 	"context"
 	"strings"
 
@@ -14,8 +15,17 @@ func CreateGrpcContext(c *gin.Context) context.Context {
 
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 
+	requestID := c.GetString("request_id")
+
+	logger.Log.Info(
+		"login request",
+		"requestId", requestID,
+		"service", "api-gateway",
+	)
+
 	md := metadata.New(map[string]string{
 		"authorization": token,
+		"x-request-id":  requestID,
 	})
 
 	ctx := metadata.NewOutgoingContext(context.Background(), md)

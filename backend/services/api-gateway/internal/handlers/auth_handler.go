@@ -38,23 +38,24 @@ type LogoutSessionRequest struct {
 // Login handles POST /auth/login
 // This endpoint forwards the request to Auth Service via gRPC
 func Login(c *gin.Context) {
-
+	log := utils.Logger(c)
 	var req LoginRequest
 
 	// Parse JSON body
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		utils.HandleGrpcError(c, err)
 		return
 	}
 
 	userAgent := c.GetHeader("User-Agent")
 	ip := c.ClientIP()
+	ctx := utils.CreateGrpcContext(c)
+
+	log.Info("calling auth login", "email", req.Email)
 
 	// Call Auth Service using gRPC client
 	resp, err := grpc.AuthSvc.Client.Login(
-		c,
+		ctx,
 		&authpb.LoginRequest{
 			Email:     req.Email,
 			Password:  req.Password,
@@ -70,6 +71,8 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	log.Info("login successful")
+
 	// Return token to client
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": resp.AccessToken,
@@ -78,23 +81,24 @@ func Login(c *gin.Context) {
 
 // It forwards the request to Auth Service via gRPC
 func Register(c *gin.Context) {
-
+	log := utils.Logger(c)
 	var req RegisterRequest
 
 	// Parse request body
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		utils.HandleGrpcError(c, err)
 		return
 	}
 
 	userAgent := c.GetHeader("User-Agent")
 	ip := c.ClientIP()
+	ctx := utils.CreateGrpcContext(c)
+
+	log.Info("calling auth register", "email", req.Email)
 
 	// Call Auth Service using gRPC
 	resp, err := grpc.AuthSvc.Client.Register(
-		c,
+		ctx,
 		&authpb.RegisterRequest{
 			Email:     req.Email,
 			Password:  req.Password,
@@ -111,7 +115,7 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-
+	log.Info("user registered")
 	// Return response from Auth Service
 	c.JSON(http.StatusOK, gin.H{
 		"message":      resp.Message,
@@ -121,15 +125,16 @@ func Register(c *gin.Context) {
 }
 
 func RefreshToken(c *gin.Context) {
+	log := utils.Logger(c)
 	var req RefreshRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.HandleGrpcError(c, err)
 		return
 	}
-
+	ctx := utils.CreateGrpcContext(c)
 	resp, err := grpc.AuthSvc.Client.RefreshToken(
-		c,
+		ctx,
 		&authpb.RefreshRequest{
 			RefreshToken: req.RefreshToken,
 		})
@@ -138,6 +143,9 @@ func RefreshToken(c *gin.Context) {
 		utils.HandleGrpcError(c, err)
 		return
 	}
+
+	log.Info("Refresh token created")
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":     resp.Message,
 		"accessToken": resp.AccessToken,
@@ -145,31 +153,34 @@ func RefreshToken(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
+	log := utils.Logger(c)
 	var req LogoutRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.HandleGrpcError(c, err)
 		return
 	}
-
+	ctx := utils.CreateGrpcContext(c)
 	resp, err := grpc.AuthSvc.Client.Logout(
-		c, &authpb.LogoutRequest{
+		ctx, &authpb.LogoutRequest{
 			UserId: req.UserId,
 		})
 	if err != nil {
 		utils.HandleGrpcError(c, err)
 		return
 	}
+	log.Info("User Logout", "UserId", req.UserId)
 	c.JSON(http.StatusOK, gin.H{
 		"message": resp.Message,
 	})
 }
 
 func GetSessions(c *gin.Context) {
+	log := utils.Logger(c)
 	userID := c.GetString("user_id")
-
+	ctx := utils.CreateGrpcContext(c)
 	resp, err := grpc.AuthSvc.Client.GetSessions(
-		c,
+		ctx,
 		&authpb.GetSessionsRequest{
 			UserId: userID,
 		},
@@ -179,20 +190,21 @@ func GetSessions(c *gin.Context) {
 		utils.HandleGrpcError(c, err)
 		return
 	}
-
+	log.Info("User Session", "UserId", userID)
 	c.JSON(200, resp)
 }
 
 func GetLogoutSession(c *gin.Context) {
+	log := utils.Logger(c)
 	var req LogoutSessionRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.HandleGrpcError(c, err)
 		return
 	}
-
+	ctx := utils.CreateGrpcContext(c)
 	resp, err := grpc.AuthSvc.Client.LogoutSession(
-		c, &authpb.LogoutSessionRequest{
+		ctx, &authpb.LogoutSessionRequest{
 			SessionId: req.SessionID,
 		})
 
@@ -200,6 +212,6 @@ func GetLogoutSession(c *gin.Context) {
 		utils.HandleGrpcError(c, err)
 		return
 	}
-
+	log.Info("User Session logout", "SessionID", req.SessionID)
 	c.JSON(http.StatusOK, resp)
 }

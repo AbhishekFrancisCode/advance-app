@@ -36,11 +36,11 @@ func NewAuthClient() *AuthClient {
 }
 
 // Login calls Auth Service Login RPC
-func (a *AuthClient) Login(email string, password string, userAgent string,
+func (a *AuthClient) Login(ctx context.Context, email string, password string, userAgent string,
 	ipAddress string) (*authpb.AuthResponse, error) {
 
 	resp, err := a.Client.Login(
-		context.Background(),
+		ctx,
 		&authpb.LoginRequest{
 			Email:     email,
 			Password:  password,
@@ -57,14 +57,14 @@ func (a *AuthClient) Login(email string, password string, userAgent string,
 }
 
 // Register calls Auth Service Register RPC
-func (a *AuthClient) Register(email string, password string, name string,
+func (a *AuthClient) Register(ctx context.Context, email string, password string, name string,
 	phone string,
 	userAgent string,
 	ipAddress string,
 ) (*authpb.AuthResponse, error) {
 
 	resp, err := a.Client.Register(
-		context.Background(),
+		ctx,
 		&authpb.RegisterRequest{
 			Email:     email,
 			Password:  password,
@@ -82,9 +82,9 @@ func (a *AuthClient) Register(email string, password string, name string,
 	return resp, nil
 }
 
-func (a *AuthClient) RefreshToken(refreshToken string) (*authpb.RefreshResponse, error) {
+func (a *AuthClient) RefreshToken(ctx context.Context, refreshToken string) (*authpb.RefreshResponse, error) {
 	resp, err := a.Client.RefreshToken(
-		context.Background(),
+		ctx,
 		&authpb.RefreshRequest{RefreshToken: refreshToken},
 	)
 	if err != nil {
@@ -95,9 +95,9 @@ func (a *AuthClient) RefreshToken(refreshToken string) (*authpb.RefreshResponse,
 }
 
 // Logout calls Auth Services RPC
-func (a *AuthClient) Logout(userId string) (*authpb.MessageResponse, error) {
+func (a *AuthClient) Logout(ctx context.Context, userId string) (*authpb.MessageResponse, error) {
 	resp, err := a.Client.Logout(
-		context.Background(),
+		ctx,
 		&authpb.LogoutRequest{
 			UserId: userId,
 		},
@@ -110,9 +110,9 @@ func (a *AuthClient) Logout(userId string) (*authpb.MessageResponse, error) {
 	return resp, nil
 }
 
-func (a *AuthClient) GetSessions(userId string) (*authpb.SessionsResponse, error) {
+func (a *AuthClient) GetSessions(ctx context.Context, userId string) (*authpb.SessionsResponse, error) {
 	resp, err := a.Client.GetSessions(
-		context.Background(),
+		ctx,
 		&authpb.GetSessionsRequest{
 			UserId: userId,
 		},
@@ -124,9 +124,9 @@ func (a *AuthClient) GetSessions(userId string) (*authpb.SessionsResponse, error
 	return resp, nil
 }
 
-func (a *AuthClient) LogoutSession(sessionId string) (*authpb.MessageResponse, error) {
+func (a *AuthClient) LogoutSession(ctx context.Context, sessionId string) (*authpb.MessageResponse, error) {
 	resp, err := a.Client.LogoutSession(
-		context.Background(),
+		ctx,
 		&authpb.LogoutSessionRequest{
 			SessionId: sessionId,
 		},

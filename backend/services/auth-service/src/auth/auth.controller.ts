@@ -4,6 +4,7 @@ import { GrpcMethod } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { logger } from 'src/common/logger/logger';
 
 @Controller()
 export class AuthController {
@@ -11,12 +12,20 @@ export class AuthController {
 
   @GrpcMethod('AuthService', 'Register')
   register(data: RegisterDto) {
-    console.log('Register hit', data);
+    logger.info({
+      msg: 'processing register',
+      email: data.email,
+    });
     return this.authService.register(data);
   }
 
   @GrpcMethod('AuthService', 'Login')
   login(data: LoginDto) {
+    logger.info({
+      msg: 'processing login',
+      email: data.email,
+    });
+
     return this.authService.login(data);
   }
 
@@ -28,17 +37,29 @@ export class AuthController {
 
   @GrpcMethod('AuthService', 'Logout')
   logout(data: { userId: string }) {
-    console.log('Delete refresh hit 1', data.userId);
+    logger.info({
+      msg: 'processing logout',
+      userId: data.userId,
+    });
+
     return this.authService.logout(data.userId);
   }
 
   @GrpcMethod('AuthService', 'GetSessions')
   getSessions(data: { userId: string }) {
+    logger.info({
+      msg: 'getting sessions',
+      userId: data.userId,
+    });
     return this.authService.getSessions(data.userId);
   }
 
   @GrpcMethod('AuthService', 'LogoutSession')
   logoutSession(data: { sessionId: string }) {
+    logger.info({
+      msg: 'logout sessions',
+      sessionId: data.sessionId,
+    });
     return this.authService.logoutSession(data.sessionId);
   }
 }

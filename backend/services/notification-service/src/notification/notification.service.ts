@@ -5,6 +5,7 @@ import { NotificationRepository } from './notification.repository';
 import { Prisma } from 'generated/prisma/client';
 import { KafkaService } from 'src/kafka/kafka.service';
 import { Producer } from 'kafkajs';
+import { logger } from 'src/common/logger/logger';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
@@ -20,7 +21,10 @@ export class NotificationService implements OnModuleInit {
   }
 
   async handleUserRegistered(userId: string, email: string, name: string) {
-    console.log('notificationRepo:> hit');
+    logger.info({
+      msg: 'processing register',
+      userId: userId,
+    });
     try {
       await sendWelcomeEmail({
         email,
@@ -75,7 +79,6 @@ export class NotificationService implements OnModuleInit {
     payload: Prisma.InputJsonValue;
     error?: string;
   }) {
-    console.log('handleDLQEvent:> hit');
     await this.notificationRepo.createDlqEvent({
       topic: data.topic,
       payload: data.payload,

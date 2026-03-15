@@ -5,6 +5,7 @@ import (
 	"api-gateway/internal/grpc" // Initializes gRPC clients
 	"api-gateway/internal/middleware"
 	"api-gateway/internal/routes" // Registers API routes
+	"api-gateway/pkg/logger"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -22,15 +23,22 @@ func main() {
 
 	// Debug route to test load balancing
 	routes.RegisterDebugRoutes(router)
+
 	// Register user routes
 	routes.RegisterUserRoutes(router)
 	routes.RegisterAuthRoutes(router)
 	routes.NotificationRoutes(router)
 
+	// Assign correlation ID
+	router.Use(middleware.RequestID())
+
 	//RedisClient
 	redisClient := config.InitRedis()
 	// rate limit: 60 requests per minute
 	router.Use(middleware.RateLimiter(redisClient, 60, time.Minute))
+
+	//Logger Slog
+	logger.Init()
 
 	// Start API Gateway server on port 8080
 	router.Run(":8080")

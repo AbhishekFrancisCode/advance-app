@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, GrpcMethod, Payload } from '@nestjs/microservices';
 import { NotificationService } from './notification.service';
+import { logger } from 'src/common/logger/logger';
 
 @Controller()
 export class NotificationController {
@@ -13,6 +14,10 @@ export class NotificationController {
 
   @GrpcMethod('NotificationService', 'GetNotifications')
   async getNotifications(data: { userId: string }) {
+    logger.info({
+      msg: 'processing register',
+      userId: data.userId,
+    });
     const notifications = await this.notificationService.getNotifications(
       data.userId,
     );
@@ -22,6 +27,9 @@ export class NotificationController {
 
   @GrpcMethod('NotificationService', 'GetDlqEvents')
   async getDlqEvents() {
+    logger.info({
+      msg: 'Get Dlq events',
+    });
     const events = await this.notificationService.getDlqEvents();
 
     return { events };
@@ -29,6 +37,10 @@ export class NotificationController {
 
   @GrpcMethod('NotificationService', 'ReplayDlqEvent')
   async replayDlqEvent(data: { id: string }) {
+    logger.info({
+      msg: 'replay Dlq events',
+      id: data.id,
+    });
     await this.notificationService.replayDlqEvent(data.id);
 
     return {

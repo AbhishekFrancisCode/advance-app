@@ -20,7 +20,7 @@ func NewAuthClient() *AuthClient {
 
 	// Connect to Auth Service running on port 50051
 	conn, err := grpc.NewClient(
-		"localhost:50051",
+		"auth-service:50051",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 

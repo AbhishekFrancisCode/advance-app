@@ -15,7 +15,7 @@ type NotificationClient struct {
 
 func NewNotificationClient() *NotificationClient {
 	conn, err := grpc.NewClient(
-		"localhost:50053",
+		"notification-service:50053",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 

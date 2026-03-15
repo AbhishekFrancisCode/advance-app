@@ -18,7 +18,7 @@ type UserClient struct {
 func NewUserClient() *UserClient {
 
 	conn, err := grpc.NewClient(
-		"localhost:50052",
+		"user-service:50052",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 

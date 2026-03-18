@@ -1,12 +1,13 @@
 import { Kafka } from 'kafkajs';
 import { logger } from 'src/common/logger/logger';
 import { getRequestId } from 'src/common/request-context';
+import { context, propagation } from '@opentelemetry/api';
 
 const kafka = new Kafka({
   clientId: 'auth-service',
   brokers: ['kafka:9092'],
 });
-
+const headers: Record<string, string> = {};
 export const producer = kafka.producer();
 
 export async function connectProducer() {
@@ -24,6 +25,10 @@ export async function publishUserRegisteredEvent(data: {
     requestId,
     ...data,
   };
+
+  // inject trace context
+  propagation.inject(context.active(), headers);
+
   await producer.send({
     topic: 'user_registered',
     messages: [

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -17,6 +18,8 @@ func CreateGrpcContext(c *gin.Context) context.Context {
 
 	requestID := c.GetString("request_id")
 
+	prop := propagation.TraceContext{}
+
 	logger.Log.Info(
 		"login request",
 		"requestId", requestID,
@@ -27,8 +30,8 @@ func CreateGrpcContext(c *gin.Context) context.Context {
 		"authorization": token,
 		"x-request-id":  requestID,
 	})
-
-	ctx := metadata.NewOutgoingContext(context.Background(), md)
+	prop.Inject(c, propagation.HeaderCarrier(md))
+	ctx := metadata.NewOutgoingContext(c, md)
 
 	return ctx
 }

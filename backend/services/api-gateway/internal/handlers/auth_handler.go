@@ -75,7 +75,9 @@ func Login(c *gin.Context) {
 
 	// Return token to client
 	c.JSON(http.StatusOK, gin.H{
-		"access_token": resp.AccessToken,
+		"message":       resp.Message,
+		"access_token":  resp.AccessToken,
+		"refresh_token": resp.RefreshToken,
 	})
 }
 

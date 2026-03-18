@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { EventRouterService } from './kafka-router.service';
 import { KafkaService } from '../kafka.service';
@@ -6,6 +9,7 @@ import { KafkaEvents } from '../kafka.events';
 import { KafkaConfig } from '../kafka.config';
 import { logger } from 'src/common/logger/logger';
 import { UserRegisteredEvent } from 'src/types/types';
+import { context, propagation, trace, Context } from '@opentelemetry/api';
 
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit {
@@ -42,49 +46,74 @@ export class KafkaConsumerService implements OnModuleInit {
         const parsed: unknown = JSON.parse(raw);
         const payload = parsed as UserRegisteredEvent;
 
-        logger.info({
-          requestId: payload.requestId,
-          msg: 'received kafka event',
-          topic,
-          email: payload.email,
-        });
+        // Convert Kafka headers to OpenTelemetry carrier
+        const carrier: Record<string, string> = {};
 
-        console.log('Kafka event received:', topic);
+        if (message.headers) {
+          Object.entries(message.headers).forEach(([key, value]) => {
+            carrier[key] = value?.toString() ?? '';
+          });
+        }
 
-        for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+        // Extract trace context
+        const parentContext: Context = propagation.extract(
+          context.active(),
+          carrier,
+        );
+
+        const tracer = trace.getTracer('notification-service', '1.0.0');
+
+        await context.with(parentContext, async () => {
+          const span = tracer.startSpan(`kafka.consume ${topic}`);
+
           try {
-            console.log(`Processing event. Attempt: ${attempt + 1}`);
             logger.info({
               requestId: payload.requestId,
+              msg: 'received kafka event',
               topic,
-              attempt: attempt + 1,
-              msg: 'processing kafka event',
+              email: payload.email,
             });
 
-            await this.eventRouter.route(topic, payload);
+            console.log('Kafka event received:', topic);
 
-            console.log('Event processed successfully');
-            return;
-          } catch (error) {
-            console.error(`Attempt ${attempt + 1} failed`, error);
+            for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+              try {
+                logger.info({
+                  requestId: payload.requestId,
+                  topic,
+                  attempt: attempt + 1,
+                  msg: 'processing kafka event',
+                });
 
-            if (attempt === RETRY_DELAYS.length) {
-              console.error('Retries exhausted. Sending to DLQ');
+                await this.eventRouter.route(topic, payload);
 
-              await this.dlqProducer.publish(topic, payload);
+                return;
+              } catch (error) {
+                console.error(`Attempt ${attempt + 1} failed`, error);
 
-              return;
+                if (attempt === RETRY_DELAYS.length) {
+                  console.error('Retries exhausted. Sending to DLQ');
+
+                  span.recordException(error as Error);
+
+                  await this.dlqProducer.publish(topic, payload);
+
+                  return;
+                }
+
+                const baseDelay = RETRY_DELAYS[attempt];
+                const jitter = Math.random() * 1000;
+                const delay = baseDelay + jitter;
+
+                console.log(`Retrying in ${delay}ms`);
+
+                await this.sleep(delay);
+              }
             }
-
-            const baseDelay = RETRY_DELAYS[attempt];
-            const jitter = Math.random() * 1000;
-            const delay = baseDelay + jitter;
-
-            console.log(`Retrying in ${delay}ms`);
-
-            await this.sleep(delay);
+          } finally {
+            span.end();
           }
-        }
+        });
       },
     });
   }

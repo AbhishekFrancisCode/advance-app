@@ -3,10 +3,15 @@ import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
+import { initTracing } from './common/observability/tracer';
 
 async function bootstrap() {
   const protoPath = join(process.cwd(), '../../proto/notification.proto');
   console.log('Proto path:', protoPath);
+
+  // Start OpenTelemetry
+  initTracing();
+
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {

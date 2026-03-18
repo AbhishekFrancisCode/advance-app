@@ -4,8 +4,10 @@ import (
 	"api-gateway/internal/config"
 	"api-gateway/internal/grpc" // Initializes gRPC clients
 	"api-gateway/internal/middleware"
+	"api-gateway/internal/observability"
 	"api-gateway/internal/routes" // Registers API routes
 	"api-gateway/pkg/logger"
+	"context"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +21,7 @@ func main() {
 	router := gin.Default()
 	router.Use(gin.Recovery())
 	router.Use(middleware.RequestLogger())
+	router.Use(middleware.TracingMiddleware())
 	// router.Use(middleware.JWTMiddleware())
 
 	// Debug route to test load balancing
@@ -39,6 +42,10 @@ func main() {
 
 	//Logger Slog
 	logger.Init()
+
+	//opentelementry
+	shutdown := observability.InitTracer("api-gateway")
+	defer shutdown(context.Background())
 
 	// Start API Gateway server on port 8080
 	router.Run(":8080")

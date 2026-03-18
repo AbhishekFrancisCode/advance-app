@@ -4,10 +4,14 @@ import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { join } from 'path';
 import { connectProducer } from './kafka/kafka.producer';
 import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
+import { initTracing } from './common/observability/tracer';
 
 async function bootstrap() {
   const protoPath = join(process.cwd(), '../../proto/auth.proto');
   console.log('Proto path:', protoPath);
+
+  // Start OpenTelemetry tracing
+  initTracing();
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,

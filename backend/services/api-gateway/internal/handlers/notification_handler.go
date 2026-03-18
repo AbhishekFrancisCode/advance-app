@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"api-gateway/internal/grpc"
+	"api-gateway/internal/resilience"
 	"api-gateway/internal/utils"
+	notifypb "api-gateway/proto/notification"
 
 	"fmt"
 	"net/http"
@@ -10,21 +12,34 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type GetNotificationsRequest struct {
+	UserId string `json:"userId"`
+}
+
 type ReplayDlqEventRequest struct {
 	Id string `json:"id"`
 }
 
+var notifyCB = resilience.NewCircuitBreaker("auth-service")
+
 func GetNotificationsData(c *gin.Context) {
 	userID := c.GetString("user_id")
 	ctx := utils.CreateGrpcContext(c)
-	resp, err := grpc.NotifySvc.GetNotifications(
-		ctx, userID,
-	)
+	result, err := authCB.Execute(func() (interface{}, error) {
+
+		return grpc.NotifySvc.Client.GetNotifications(
+			ctx,
+			&notifypb.GetNotificationsRequest{
+				UserId: userID,
+			},
+		)
+	})
 
 	if err != nil {
 		utils.HandleGrpcError(c, err)
 		return
 	}
+	resp := result.(*notifypb.GetNotificationsResponse)
 	fmt.Println("notification data", resp)
 	c.JSON(http.StatusOK, resp)
 }

@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"api-gateway/internal/grpc"
+	"api-gateway/internal/resilience"
 	"api-gateway/internal/utils"
+	authpb "api-gateway/proto/auth"
+	userpb "api-gateway/proto/user"
 	"fmt"
 	"net/http"
 
@@ -11,6 +14,7 @@ import (
 
 // LoginRequest represents login payload from client
 type UpdateUserRequest struct {
+	UserId  string `json:"userId`
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
 	Email   string `json:"email"`
@@ -22,6 +26,8 @@ type UpdateUserRequest struct {
 type GetUserByEmailRequest struct {
 	Email string `json:"email"`
 }
+
+var userCB = resilience.NewCircuitBreaker("user-service")
 
 func UpdateUserProfile(c *gin.Context) {
 
@@ -36,22 +42,26 @@ func UpdateUserProfile(c *gin.Context) {
 	// example: user_id extracted from JWT middleware
 	userID := c.GetString("user_id")
 	ctx := utils.CreateGrpcContext(c)
-	resp, err := grpc.UserSvc.UpdateUserProfile(
-		ctx,
-		userID,
-		req.Name,
-		req.Phone,
-		req.Email,
-		req.Address,
-		req.Dob,
-		req.Avatar,
-	)
+	result, err := authCB.Execute(func() (interface{}, error) {
 
+		return grpc.UserSvc.Client.UpdateUserProfile(
+			ctx,
+			&userpb.UpdateUserRequest{
+				UserId:  userID,
+				Name:    req.Name,
+				Phone:   req.Phone,
+				Email:   req.Email,
+				Address: req.Address,
+				Dob:     req.Dob,
+				Avatar:  req.Avatar,
+			},
+		)
+	})
 	if err != nil {
 		utils.HandleGrpcError(c, err)
 		return
 	}
-
+	resp := result.(*authpb.AuthResponse)
 	c.JSON(200, resp)
 }
 

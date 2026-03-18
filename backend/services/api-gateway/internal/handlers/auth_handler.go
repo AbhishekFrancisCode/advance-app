@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"api-gateway/internal/grpc"
+	"api-gateway/internal/resilience"
 	"api-gateway/internal/utils"
 	authpb "api-gateway/proto/auth"
 
@@ -35,6 +36,8 @@ type LogoutSessionRequest struct {
 	SessionID string `json:"sessionId"`
 }
 
+var authCB = resilience.NewCircuitBreaker("auth-service")
+
 // Login handles POST /auth/login
 // This endpoint forwards the request to Auth Service via gRPC
 func Login(c *gin.Context) {
@@ -54,15 +57,19 @@ func Login(c *gin.Context) {
 	log.Info("calling auth login", "email", req.Email)
 
 	// Call Auth Service using gRPC client
-	resp, err := grpc.AuthSvc.Client.Login(
-		ctx,
-		&authpb.LoginRequest{
-			Email:     req.Email,
-			Password:  req.Password,
-			UserAgent: userAgent,
-			IpAddress: ip,
-		},
-	)
+	result, err := authCB.Execute(func() (interface{}, error) {
+
+		return grpc.AuthSvc.Client.Login(
+			ctx,
+			&authpb.LoginRequest{
+				Email:     req.Email,
+				Password:  req.Password,
+				UserAgent: userAgent,
+				IpAddress: ip,
+			},
+		)
+
+	})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -72,7 +79,7 @@ func Login(c *gin.Context) {
 	}
 
 	log.Info("login successful")
-
+	resp := result.(*authpb.AuthResponse)
 	// Return token to client
 	c.JSON(http.StatusOK, gin.H{
 		"message":       resp.Message,
@@ -99,17 +106,20 @@ func Register(c *gin.Context) {
 	log.Info("calling auth register", "email", req.Email)
 
 	// Call Auth Service using gRPC
-	resp, err := grpc.AuthSvc.Client.Register(
-		ctx,
-		&authpb.RegisterRequest{
-			Email:     req.Email,
-			Password:  req.Password,
-			Name:      req.Name,
-			Phone:     req.Phone,
-			UserAgent: userAgent,
-			IpAddress: ip,
-		},
-	)
+	result, err := authCB.Execute(func() (interface{}, error) {
+
+		return grpc.AuthSvc.Client.Register(
+			ctx,
+			&authpb.RegisterRequest{
+				Email:     req.Email,
+				Password:  req.Password,
+				Name:      req.Name,
+				Phone:     req.Phone,
+				UserAgent: userAgent,
+				IpAddress: ip,
+			},
+		)
+	})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -118,6 +128,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	log.Info("user registered")
+	resp := result.(*authpb.AuthResponse)
 	// Return response from Auth Service
 	c.JSON(http.StatusOK, gin.H{
 		"message":      resp.Message,
@@ -135,11 +146,14 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 	ctx := utils.CreateGrpcContext(c)
-	resp, err := grpc.AuthSvc.Client.RefreshToken(
-		ctx,
-		&authpb.RefreshRequest{
-			RefreshToken: req.RefreshToken,
-		})
+	result, err := authCB.Execute(func() (interface{}, error) {
+
+		return grpc.AuthSvc.Client.RefreshToken(
+			ctx,
+			&authpb.RefreshRequest{
+				RefreshToken: req.RefreshToken,
+			})
+	})
 
 	if err != nil {
 		utils.HandleGrpcError(c, err)
@@ -147,7 +161,7 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	log.Info("Refresh token created")
-
+	resp := result.(*authpb.AuthResponse)
 	c.JSON(http.StatusOK, gin.H{
 		"message":     resp.Message,
 		"accessToken": resp.AccessToken,

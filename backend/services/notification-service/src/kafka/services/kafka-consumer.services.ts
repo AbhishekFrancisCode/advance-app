@@ -44,6 +44,13 @@ export class KafkaConsumerService implements OnModuleInit {
       eachMessage: async ({ topic, message }) => {
         console.log('🔥 Kafka consumer hit');
         const raw = message.value?.toString() ?? '{}';
+        const envelope = JSON.parse(raw);
+        logger.info({
+          msg: 'received kafka event',
+          eventId: envelope.eventId,
+          eventType: envelope.eventType,
+          requestId: envelope.requestId,
+        });
         const parsed: unknown = JSON.parse(raw);
         const payload = parsed as UserRegisteredEvent;
 

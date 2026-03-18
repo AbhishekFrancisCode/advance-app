@@ -38,6 +38,11 @@ export async function publishUserRegisteredEvent(data: {
     version: 1,
     payload,
   };
+
+  logger.info({
+    msg: 'publishing event',
+    envelope,
+  });
   // inject trace context
   propagation.inject(context.active(), headers);
 

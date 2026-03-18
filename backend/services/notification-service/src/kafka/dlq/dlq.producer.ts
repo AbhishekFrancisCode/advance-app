@@ -33,6 +33,11 @@ export class DlqProducer {
       payload,
     };
 
+    logger.info({
+      msg: 'publishing event',
+      envelope,
+    });
+
     await this.producer.send({
       topic: `${topic}_dlq`,
       messages: [

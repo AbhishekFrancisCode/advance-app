@@ -19,6 +19,7 @@ func CreateGrpcContext(c *gin.Context) context.Context {
 	requestID := c.GetString("request_id")
 
 	prop := propagation.TraceContext{}
+	carrier := propagation.HeaderCarrier{}
 
 	logger.Log.Info(
 		"login request",
@@ -30,8 +31,13 @@ func CreateGrpcContext(c *gin.Context) context.Context {
 		"authorization": token,
 		"x-request-id":  requestID,
 	})
-	prop.Inject(c, propagation.HeaderCarrier(md))
-	ctx := metadata.NewOutgoingContext(c, md)
+	ctx := c.Request.Context()
+
+	prop.Inject(ctx, carrier)
+	for k, v := range carrier {
+		md.Set(strings.ToLower(k), v[0])
+	}
+	ctx = metadata.NewOutgoingContext(c, md)
 
 	return ctx
 }

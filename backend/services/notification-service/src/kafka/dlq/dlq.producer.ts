@@ -3,6 +3,8 @@ import { KafkaService } from '../kafka.service';
 import { Producer } from 'kafkajs';
 import { getRequestId } from 'src/common/request-context';
 import { logger } from 'src/common/logger/logger';
+import { v4 as uuidv4 } from 'uuid';
+import { EventEnvelope } from 'src/types/event-envelope';
 
 @Injectable()
 export class DlqProducer {
@@ -20,10 +22,14 @@ export class DlqProducer {
       this.isConnected = true;
     }
 
-    const requestId = getRequestId();
+    const requestId = getRequestId() ?? uuidv4();
 
-    const event = {
-      requestId,
+    const envelope: EventEnvelope<unknown> = {
+      eventId: uuidv4(),
+      eventType: `${topic}_dlq`,
+      requestId: requestId,
+      timestamp: new Date().toISOString(),
+      version: 1,
       payload,
     };
 
@@ -31,7 +37,7 @@ export class DlqProducer {
       topic: `${topic}_dlq`,
       messages: [
         {
-          value: JSON.stringify(event),
+          value: JSON.stringify(envelope),
         },
       ],
     });

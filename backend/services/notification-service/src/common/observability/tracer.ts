@@ -17,5 +17,10 @@ export function initTracing() {
 
   sdk.start();
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  process.on('SIGTERM', async () => {
+    await sdk.shutdown();
+  });
+
   console.log('Tracing initialized for notification-service');
 }

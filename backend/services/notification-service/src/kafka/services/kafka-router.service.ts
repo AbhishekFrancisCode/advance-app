@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
 import { KAFKA_EVENT } from '../decorators/kafka-event.decorator';
 import { KafkaEventHandler } from '../event-handler.interface';
+import { trace } from '@opentelemetry/api';
 
 @Injectable()
 export class EventRouterService implements OnModuleInit {
@@ -35,6 +36,10 @@ export class EventRouterService implements OnModuleInit {
       /*eg: handlers Map:
                 "user_registered" → UserRegisteredHandler
                 "discount_notification" → DiscountHandler */
+      const tracer = trace.getTracer('notification-service');
+
+      const span = tracer.startSpan('startup-test-span');
+      span.end();
     }
   }
   //eg: Kafka consumer receives

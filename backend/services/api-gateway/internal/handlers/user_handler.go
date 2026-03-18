@@ -2,9 +2,7 @@ package handlers
 
 import (
 	"api-gateway/internal/grpc"
-	"api-gateway/internal/resilience"
 	"api-gateway/internal/utils"
-	authpb "api-gateway/proto/auth"
 	userpb "api-gateway/proto/user"
 	"fmt"
 	"net/http"
@@ -14,7 +12,7 @@ import (
 
 // LoginRequest represents login payload from client
 type UpdateUserRequest struct {
-	UserId  string `json:"userId`
+	UserId  string `json:"userId"`
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
 	Email   string `json:"email"`
@@ -26,8 +24,6 @@ type UpdateUserRequest struct {
 type GetUserByEmailRequest struct {
 	Email string `json:"email"`
 }
-
-var userCB = resilience.NewCircuitBreaker("user-service")
 
 func UpdateUserProfile(c *gin.Context) {
 
@@ -42,26 +38,24 @@ func UpdateUserProfile(c *gin.Context) {
 	// example: user_id extracted from JWT middleware
 	userID := c.GetString("user_id")
 	ctx := utils.CreateGrpcContext(c)
-	result, err := authCB.Execute(func() (interface{}, error) {
+	resp, err := grpc.UserSvc.Client.UpdateUserProfile(
+		ctx,
+		&userpb.UpdateUserRequest{
+			UserId:  userID,
+			Name:    req.Name,
+			Phone:   req.Phone,
+			Email:   req.Email,
+			Avatar:  req.Avatar,
+			Address: req.Address,
+			Dob:     req.Dob,
+		},
+	)
 
-		return grpc.UserSvc.Client.UpdateUserProfile(
-			ctx,
-			&userpb.UpdateUserRequest{
-				UserId:  userID,
-				Name:    req.Name,
-				Phone:   req.Phone,
-				Email:   req.Email,
-				Address: req.Address,
-				Dob:     req.Dob,
-				Avatar:  req.Avatar,
-			},
-		)
-	})
 	if err != nil {
 		utils.HandleGrpcError(c, err)
 		return
 	}
-	resp := result.(*authpb.AuthResponse)
+
 	c.JSON(200, resp)
 }
 
@@ -76,7 +70,10 @@ func GetUserByEmail(c *gin.Context) {
 	email := c.GetString("email")
 	ctx := utils.CreateGrpcContext(c)
 
-	resp, err := grpc.UserSvc.GetUserDataByEmail(ctx, email)
+	resp, err := grpc.UserSvc.Client.GetUserByEmail(ctx,
+		&userpb.GetUserByEmailRequest{
+			Email: email,
+		})
 
 	if err != nil {
 		utils.HandleGrpcError(c, err)
@@ -99,7 +96,7 @@ func GetUserById(c *gin.Context) {
 	ctx := utils.CreateGrpcContext(c)
 
 	utils.HandleGrpcCall(c, func() (interface{}, error) {
-		return grpc.UserSvc.GetUserDataById(ctx, userID)
+		return grpc.UserSvc.GetUserById(ctx, userID)
 	})
 
 }

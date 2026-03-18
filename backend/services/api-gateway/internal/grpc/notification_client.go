@@ -1,16 +1,19 @@
 package grpc
 
 import (
-	pb "api-gateway/proto/notification"
+	"api-gateway/internal/resilience"
+	notifypb "api-gateway/proto/notification"
 	"context"
 	"log"
 
+	"github.com/sony/gobreaker"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type NotificationClient struct {
-	Client pb.NotificationServiceClient
+	Client notifypb.NotificationServiceClient
+	cb     *gobreaker.CircuitBreaker
 }
 
 func NewNotificationClient() *NotificationClient {
@@ -23,31 +26,35 @@ func NewNotificationClient() *NotificationClient {
 		log.Fatal("Failed to connect usr services: %v", err)
 	}
 
-	client := pb.NewNotificationServiceClient(conn)
+	client := notifypb.NewNotificationServiceClient(conn)
 
 	return &NotificationClient{
 		Client: client,
+		cb:     resilience.NewCircuitBreaker("notification-service"),
 	}
 }
 
 func (n *NotificationClient) GetNotifications(
 	ctx context.Context,
 	userID string,
-) (*pb.GetNotificationsResponse, error) {
-	resp, err := n.Client.GetNotifications(ctx, &pb.GetNotificationsRequest{UserId: userID})
+) (*notifypb.GetNotificationsResponse, error) {
+	result, err := n.cb.Execute(func() (interface{}, error) {
+
+		return n.Client.GetNotifications(ctx, &notifypb.GetNotificationsRequest{UserId: userID})
+	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	return result.(*notifypb.GetNotificationsResponse), nil
 }
 
 func (n *NotificationClient) GetDlqEvents(
 	ctx context.Context,
 	userID string,
-) (*pb.GetDlqEventsResponse, error) {
-	resp, err := n.Client.GetDlqEvents(ctx, &pb.GetDlqEventsRequest{UserId: userID})
+) (*notifypb.GetDlqEventsResponse, error) {
+	resp, err := n.Client.GetDlqEvents(ctx, &notifypb.GetDlqEventsRequest{UserId: userID})
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +65,8 @@ func (n *NotificationClient) GetDlqEvents(
 func (n *NotificationClient) ReplayDlqEvent(
 	ctx context.Context,
 	id string,
-) (*pb.ReplayDlqEventResponse, error) {
-	resp, err := n.Client.ReplayDlqEvent(ctx, &pb.ReplayDlqEventRequest{Id: id})
+) (*notifypb.ReplayDlqEventResponse, error) {
+	resp, err := n.Client.ReplayDlqEvent(ctx, &notifypb.ReplayDlqEventRequest{Id: id})
 	if err != nil {
 		return nil, err
 	}

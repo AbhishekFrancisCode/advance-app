@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 
+	"api-gateway/internal/resilience"
 	authpb "api-gateway/proto/auth"
 
+	"github.com/sony/gobreaker"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -13,6 +15,7 @@ import (
 // AuthClient wraps the gRPC AuthService client
 type AuthClient struct {
 	Client authpb.AuthServiceClient
+	cb     *gobreaker.CircuitBreaker
 }
 
 // NewAuthClient creates a connection to the Auth Service
@@ -32,6 +35,7 @@ func NewAuthClient() *AuthClient {
 
 	return &AuthClient{
 		Client: client,
+		cb:     resilience.NewCircuitBreaker("auth-service"),
 	}
 }
 
@@ -39,21 +43,24 @@ func NewAuthClient() *AuthClient {
 func (a *AuthClient) Login(ctx context.Context, email string, password string, userAgent string,
 	ipAddress string) (*authpb.AuthResponse, error) {
 
-	resp, err := a.Client.Login(
-		ctx,
-		&authpb.LoginRequest{
-			Email:     email,
-			Password:  password,
-			UserAgent: userAgent,
-			IpAddress: ipAddress,
-		},
-	)
+	result, err := a.cb.Execute(func() (interface{}, error) {
+
+		return a.Client.Login(
+			ctx,
+			&authpb.LoginRequest{
+				Email:     email,
+				Password:  password,
+				UserAgent: userAgent,
+				IpAddress: ipAddress,
+			},
+		)
+	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	return result.(*authpb.AuthResponse), nil
 }
 
 // Register calls Auth Service Register RPC
@@ -63,35 +70,40 @@ func (a *AuthClient) Register(ctx context.Context, email string, password string
 	ipAddress string,
 ) (*authpb.AuthResponse, error) {
 
-	resp, err := a.Client.Register(
-		ctx,
-		&authpb.RegisterRequest{
-			Email:     email,
-			Password:  password,
-			Name:      name,
-			Phone:     phone,
-			UserAgent: userAgent,
-			IpAddress: ipAddress,
-		},
-	)
+	result, err := a.cb.Execute(func() (interface{}, error) {
 
+		return a.Client.Register(
+			ctx,
+			&authpb.RegisterRequest{
+				Email:     email,
+				Password:  password,
+				Name:      name,
+				Phone:     phone,
+				UserAgent: userAgent,
+				IpAddress: ipAddress,
+			},
+		)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	return result.(*authpb.AuthResponse), nil
 }
 
 func (a *AuthClient) RefreshToken(ctx context.Context, refreshToken string) (*authpb.RefreshResponse, error) {
-	resp, err := a.Client.RefreshToken(
-		ctx,
-		&authpb.RefreshRequest{RefreshToken: refreshToken},
-	)
+	result, err := a.cb.Execute(func() (interface{}, error) {
+
+		return a.Client.RefreshToken(
+			ctx,
+			&authpb.RefreshRequest{RefreshToken: refreshToken},
+		)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	return result.(*authpb.RefreshResponse), nil
 }
 
 // Logout calls Auth Services RPC

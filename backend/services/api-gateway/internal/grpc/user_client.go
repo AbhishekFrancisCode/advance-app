@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"log"
 
-	pb "api-gateway/proto/user"
+	"api-gateway/internal/resilience"
+	userpb "api-gateway/proto/user"
 
+	"github.com/sony/gobreaker"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type UserClient struct {
-	Client pb.UserServiceClient
+	Client userpb.UserServiceClient
+	cb     *gobreaker.CircuitBreaker
 }
 
 func NewUserClient() *UserClient {
@@ -26,10 +29,11 @@ func NewUserClient() *UserClient {
 		log.Fatalf("Failed to connect user service: %v", err)
 	}
 
-	client := pb.NewUserServiceClient(conn)
+	client := userpb.NewUserServiceClient(conn)
 
 	return &UserClient{
 		Client: client,
+		cb:     resilience.NewCircuitBreaker("user-service"),
 	}
 }
 
@@ -42,11 +46,11 @@ func (u *UserClient) UpdateUserProfile(
 	address string,
 	dob string,
 	avatar string,
-) (*pb.UserResponse, error) {
+) (*userpb.UserResponse, error) {
 
 	resp, err := u.Client.UpdateUserProfile(
 		ctx,
-		&pb.UpdateUserRequest{
+		&userpb.UpdateUserRequest{
 			UserId:  userID,
 			Name:    name,
 			Phone:   phone,
@@ -64,12 +68,12 @@ func (u *UserClient) UpdateUserProfile(
 	return resp, nil
 }
 
-func (u *UserClient) GetUserDataByEmail(
+func (u *UserClient) GetUserByEmail(
 	ctx context.Context, email string,
-) (*pb.UserProfileResponse, error) {
+) (*userpb.UserProfileResponse, error) {
 	resp, err := u.Client.GetUserByEmail(
 		ctx,
-		&pb.GetUserByEmailRequest{Email: email},
+		&userpb.GetUserByEmailRequest{Email: email},
 	)
 	fmt.Println("responce grpc : ", resp)
 	if err != nil {
@@ -79,12 +83,12 @@ func (u *UserClient) GetUserDataByEmail(
 	return resp, nil
 }
 
-func (u *UserClient) GetUserDataById(ctx context.Context,
+func (u *UserClient) GetUserById(ctx context.Context,
 	userID string,
-) (*pb.UserProfileResponse, error) {
+) (*userpb.UserProfileResponse, error) {
 	resp, err := u.Client.GetUserById(
 		ctx,
-		&pb.GetUserRequest{UserId: userID},
+		&userpb.GetUserRequest{UserId: userID},
 	)
 	fmt.Println("responce grpc : ", resp)
 	if err != nil {
@@ -94,11 +98,11 @@ func (u *UserClient) GetUserDataById(ctx context.Context,
 	return resp, nil
 }
 
-func (u *UserClient) DeleteUser(ctx context.Context, userID string) (*pb.UserResponse, error) {
+func (u *UserClient) DeleteUser(ctx context.Context, userID string) (*userpb.UserResponse, error) {
 
 	resp, err := u.Client.DeleteUser(
 		ctx,
-		&pb.GetUserRequest{
+		&userpb.GetUserRequest{
 			UserId: userID,
 		},
 	)

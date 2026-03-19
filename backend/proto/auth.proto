@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package auth;
 
+import "google/protobuf/empty.proto";
+
 option go_package = "api-gateway/proto/auth;auth";
 
 service AuthService {
@@ -11,6 +13,12 @@ service AuthService {
   rpc Logout (LogoutRequest) returns (MessageResponse);
   rpc GetSessions (GetSessionsRequest) returns (SessionsResponse);
   rpc LogoutSession (LogoutSessionRequest) returns (MessageResponse);
+
+  rpc Health(google.protobuf.Empty) returns (HealthResponse);
+}
+
+message HealthResponse {
+  string status = 1;
 }
 
 message RegisterRequest {

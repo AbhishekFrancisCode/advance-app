@@ -10,6 +10,11 @@ import { logger } from 'src/common/logger/logger';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @GrpcMethod('AuthService', 'Health')
+  health(): { status: string } {
+    return { status: 'ok' };
+  }
+
   @GrpcMethod('AuthService', 'Register')
   register(data: RegisterDto) {
     logger.info({

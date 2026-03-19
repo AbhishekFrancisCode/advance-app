@@ -17,6 +17,15 @@ func main() {
 	// Initialize connections to all microservices
 	grpc.InitClients()
 
+	//RedisClient
+	redisClient := config.InitRedis()
+
+	// 🔹 Build dependencies (IMPORTANT)
+	deps := &config.Dependencies{
+		Redis:      redisClient,
+		AuthClient: grpc.AuthSvc, // adjust if different
+	}
+
 	// Create Gin HTTP server
 	router := gin.Default()
 	router.Use(gin.Recovery())
@@ -32,11 +41,12 @@ func main() {
 	routes.RegisterAuthRoutes(router)
 	routes.NotificationRoutes(router)
 
+	//Register Health + Readiness routes
+	routes.RegisterHealthRoutes(router, deps)
+
 	// Assign correlation ID
 	router.Use(middleware.RequestID())
 
-	//RedisClient
-	redisClient := config.InitRedis()
 	// rate limit: 60 requests per minute
 	router.Use(middleware.RateLimiter(redisClient, 60, time.Minute))
 

@@ -10,6 +10,7 @@ import (
 	"github.com/sony/gobreaker"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // AuthClient wraps the gRPC AuthService client
@@ -61,6 +62,11 @@ func (a *AuthClient) Login(ctx context.Context, email string, password string, u
 	}
 
 	return result.(*authpb.AuthResponse), nil
+}
+
+func (a *AuthClient) HealthCheck(ctx context.Context) error {
+	_, err := a.Client.Health(ctx, &emptypb.Empty{})
+	return err
 }
 
 // Register calls Auth Service Register RPC

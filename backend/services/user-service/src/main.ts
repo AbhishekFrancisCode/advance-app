@@ -3,11 +3,12 @@ import { AppModule } from './app.module';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { join } from 'path';
 import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
+import { initTracing } from './common/observability/tracer';
 
 async function bootstrap() {
   const protoPath = join(process.cwd(), '../../proto/user.proto');
   console.log('Proto path:', protoPath);
-
+  initTracing();
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {

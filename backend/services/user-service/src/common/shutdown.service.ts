@@ -1,5 +1,6 @@
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { shutdownTracing } from './observability/tracer';
 
 @Injectable()
 export class ShutdownService implements OnApplicationShutdown {
@@ -14,7 +15,7 @@ export class ShutdownService implements OnApplicationShutdown {
     try {
       await this.prisma.$disconnect();
 
-      // await shutdownTracing();
+      await shutdownTracing();
 
       console.log('User Service shutdown complete');
     } catch (err) {

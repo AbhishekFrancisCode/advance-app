@@ -11,11 +11,21 @@ const kafka = new Kafka({
   clientId: 'auth-service',
   brokers: ['kafka:9092'],
 });
-const headers: Record<string, string> = {};
 export const producer = kafka.producer();
+let isConnected: boolean = false;
 
 export async function connectProducer() {
   await producer.connect();
+  isConnected = true;
+}
+
+export async function disconnectProducer(): Promise<void> {
+  try {
+    await producer.disconnect();
+    console.log('Kafka producer disconnected');
+  } catch (err) {
+    console.error('Error disconnecting Kafka producer:', err);
+  }
 }
 
 export async function publishUserRegisteredEvent(data: {
@@ -23,6 +33,10 @@ export async function publishUserRegisteredEvent(data: {
   email: string;
   name: string;
 }) {
+  if (!isConnected) {
+    throw new Error('Kafka producer not connected');
+  }
+  const headers: Record<string, string> = {};
   const requestId = getRequestId() ?? uuidv4();
 
   const payload: UserRegisteredEvent = {
@@ -38,11 +52,6 @@ export async function publishUserRegisteredEvent(data: {
     version: 1,
     payload,
   };
-
-  logger.info({
-    msg: 'publishing event',
-    envelope,
-  });
   // inject trace context
   propagation.inject(context.active(), headers);
 

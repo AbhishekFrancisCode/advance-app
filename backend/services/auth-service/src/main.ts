@@ -8,9 +8,7 @@ import { initTracing } from './common/observability/tracer';
 
 async function bootstrap() {
   const protoPath = join(process.cwd(), '../../proto/auth.proto');
-  console.log('Proto path:', protoPath);
 
-  // Start OpenTelemetry tracing
   initTracing();
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
@@ -19,19 +17,39 @@ async function bootstrap() {
       transport: Transport.GRPC,
       options: {
         package: 'auth',
-        protoPath: protoPath,
+        protoPath,
         url: '0.0.0.0:50051',
       },
     },
   );
 
-  // register interceptor
+  app.enableShutdownHooks();
+
   app.useGlobalInterceptors(new RequestIdInterceptor());
 
-  // connect kafka producer
-  await connectProducer();
+  await connectProducer().catch((err) => {
+    console.error('Kafka connection failed:', err);
+  });
 
   await app.listen();
+
+  // 🔥 CRITICAL ADDITION
+  const shutdown = (signal: string) => {
+    console.log(`🛑 ${signal} received`);
+
+    void (async () => {
+      try {
+        await app.close(); // triggers OnApplicationShutdown
+      } catch (err) {
+        console.error('Shutdown error:', err);
+      } finally {
+        process.exit(0);
+      }
+    })();
+  };
+
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 }
 bootstrap()
   .then(() => console.log('Auth Service started'))

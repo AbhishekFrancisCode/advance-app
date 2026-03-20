@@ -7,11 +7,12 @@ import { AuthController } from './auth.controller';
 import { JwtGuard } from './jwt/jwt.guard';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
+import { ShutdownService } from 'src/common/shutdown.service';
 
 @Module({
   imports: [
     PrismaModule,
-    // 🔐 JWT Configuration
+    // JWT Configuration
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'super-secret-key',
       signOptions: { expiresIn: '1h' },
@@ -41,6 +42,6 @@ import { join } from 'path';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthRepository, JwtGuard],
+  providers: [AuthService, AuthRepository, JwtGuard, ShutdownService],
 })
 export class AuthModule {}

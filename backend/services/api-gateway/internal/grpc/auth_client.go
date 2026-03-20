@@ -17,6 +17,7 @@ import (
 type AuthClient struct {
 	Client authpb.AuthServiceClient
 	cb     *gobreaker.CircuitBreaker
+	conn   *grpc.ClientConn
 }
 
 // NewAuthClient creates a connection to the Auth Service
@@ -154,4 +155,10 @@ func (a *AuthClient) LogoutSession(ctx context.Context, sessionId string) (*auth
 	}
 
 	return resp, nil
+}
+
+func (a *AuthClient) Close() {
+	if a.conn != nil {
+		a.conn.Close()
+	}
 }

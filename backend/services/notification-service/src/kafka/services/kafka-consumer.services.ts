@@ -28,8 +28,23 @@ export class KafkaConsumerService
     private dlqProducer: DlqProducer,
   ) {}
 
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  private isShuttingDown = false;
+
+  private sleepInterruptible(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        resolve();
+      }, ms);
+
+      //if shutdown happens → cancel delay
+      const interval = setInterval(() => {
+        if (this.isShuttingDown) {
+          clearTimeout(timeout);
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
+    });
   }
 
   async onModuleInit() {
@@ -94,6 +109,10 @@ export class KafkaConsumerService
             console.log('Kafka event received:', topic);
 
             for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+              if (this.isShuttingDown) {
+                console.log('⛔ Shutdown in progress — aborting retry');
+                return;
+              }
               try {
                 logger.info({
                   requestId: payload.requestId,
@@ -124,7 +143,7 @@ export class KafkaConsumerService
 
                 console.log(`Retrying in ${delay}ms`);
 
-                await this.sleep(delay);
+                await this.sleepInterruptible(delay);
               }
             }
           } finally {
@@ -136,11 +155,23 @@ export class KafkaConsumerService
   }
 
   async onApplicationShutdown(signal?: string) {
+    if (this.isShuttingDown) return;
+    this.isShuttingDown = true;
     console.log('🛑 Shutting down Kafka consumer...', signal);
 
+    if (!this.consumer) return;
     try {
       if (this.consumer) {
-        await this.consumer.disconnect(); // ✅ SAFE SHUTDOWN
+        await this.consumer.stop();
+        await Promise.race([
+          this.consumer.disconnect(),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('Kafka disconnect timeout')),
+              5000,
+            ),
+          ),
+        ]);
         console.log('✅ Kafka consumer disconnected');
       }
     } catch (error) {

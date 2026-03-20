@@ -38,11 +38,13 @@ async function bootstrap() {
       } catch (err) {
         console.error('Shutdown error:', err);
       } finally {
+        console.log('🚀 Forcing process exit');
         process.exit(0);
       }
     })();
   };
-  process.on('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 }
 bootstrap()
   .then(() => console.log('Notification Service started'))

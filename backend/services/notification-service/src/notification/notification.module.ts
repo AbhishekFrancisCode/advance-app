@@ -11,6 +11,7 @@ import { DiscoveryModule } from '@nestjs/core';
 import { DlqConsumerService } from 'src/kafka/dlq/dlq-consumer.service';
 import { KafkaModule } from 'src/kafka/kafka.module';
 import { DlqProducer } from 'src/kafka/dlq/dlq.producer';
+import { ShutdownService } from 'src/common/shutdown.service';
 
 @Module({
   imports: [PrismaModule, DiscoveryModule, KafkaModule],
@@ -27,6 +28,8 @@ import { DlqProducer } from 'src/kafka/dlq/dlq.producer';
 
     DlqProducer,
     DlqConsumerService,
+
+    ShutdownService,
   ],
   exports: [NotificationService],
 })

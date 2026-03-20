@@ -23,11 +23,26 @@ async function bootstrap() {
       },
     },
   );
-
+  app.enableShutdownHooks();
   // register interceptor
   app.useGlobalInterceptors(new RequestIdInterceptor());
 
   await app.listen();
+
+  const shutdown = (signal: string) => {
+    console.log(`🛑 ${signal} received`);
+
+    void (async () => {
+      try {
+        await app.close(); // triggers OnApplicationShutdown
+      } catch (err) {
+        console.error('Shutdown error:', err);
+      } finally {
+        process.exit(0);
+      }
+    })();
+  };
+  process.on('SIGINT', shutdown);
 }
 bootstrap()
   .then(() => console.log('Notification Service started'))

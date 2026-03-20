@@ -1,14 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { resourceFromAttributes } from '@opentelemetry/resources';
+
+let sdk: NodeSDK | null = null;
 
 export function initTracing() {
   const traceExporter = new OTLPTraceExporter({
     url: 'http://jaeger:4317',
   });
 
-  const sdk = new NodeSDK({
+  sdk = new NodeSDK({
     traceExporter,
     resource: resourceFromAttributes({
       'service.name': 'notification-service',
@@ -17,10 +18,12 @@ export function initTracing() {
 
   sdk.start();
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  process.on('SIGTERM', async () => {
-    await sdk.shutdown();
-  });
-
   console.log('Tracing initialized for notification-service');
+}
+
+export async function shutdownTracing(): Promise<void> {
+  if (sdk) {
+    await sdk.shutdown();
+    console.log('Tracing shutdown');
+  }
 }

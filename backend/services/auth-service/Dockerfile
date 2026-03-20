@@ -19,7 +19,3 @@ COPY services/auth-service/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
-
-# CMD ["sh", "-c", "cd services/auth-service && npx prisma migrate deploy && exec pnpm start:dev"]
-
-# CMD sh -c "cd services/auth-service && npx prisma migrate deploy && pnpm start:dev"

@@ -12,4 +12,9 @@ COPY . .
 
 EXPOSE 50053
 
-CMD sh -c "sleep 5 && cd services/notification-service && pnpm exec prisma migrate dev && pnpm --filter notification-service start:dev"
+COPY services/notification-service/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+# CMD sh -c "sleep 5 && cd services/notification-service && pnpm exec prisma migrate dev && pnpm --filter notification-service start:dev"

@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  OnApplicationShutdown,
+  OnModuleInit,
+} from '@nestjs/common';
 import { EventRouterService } from './kafka-router.service';
 import { KafkaService } from '../kafka.service';
 import { DlqProducer } from '../dlq/dlq.producer';
@@ -10,9 +14,14 @@ import { KafkaConfig } from '../kafka.config';
 import { logger } from 'src/common/logger/logger';
 import { UserRegisteredEvent } from 'src/types/types';
 import { context, propagation, trace, Context } from '@opentelemetry/api';
+import { Consumer } from 'kafkajs';
 
 @Injectable()
-export class KafkaConsumerService implements OnModuleInit {
+export class KafkaConsumerService
+  implements OnModuleInit, OnApplicationShutdown
+{
+  private consumer: Consumer;
+
   constructor(
     private eventRouter: EventRouterService,
     private kafkaService: KafkaService,
@@ -24,23 +33,23 @@ export class KafkaConsumerService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const consumer = this.kafkaService.createConsumer(
+    this.consumer = this.kafkaService.createConsumer(
       KafkaConfig.consumerGroups.NOTIFICATION,
     );
 
-    await consumer.connect();
+    await this.consumer.connect();
 
-    await consumer.subscribe({
+    await this.consumer.subscribe({
       topic: KafkaEvents.USER_REGISTERED,
     });
 
-    await consumer.subscribe({
+    await this.consumer.subscribe({
       topic: KafkaEvents.DISCOUNT_NOTIFICATION,
     });
 
     const RETRY_DELAYS = [1000, 5000, 15000];
 
-    await consumer.run({
+    await this.consumer.run({
       eachMessage: async ({ topic, message }) => {
         console.log('🔥 Kafka consumer hit');
         const raw = message.value?.toString() ?? '{}';
@@ -124,5 +133,18 @@ export class KafkaConsumerService implements OnModuleInit {
         });
       },
     });
+  }
+
+  async onApplicationShutdown(signal?: string) {
+    console.log('🛑 Shutting down Kafka consumer...', signal);
+
+    try {
+      if (this.consumer) {
+        await this.consumer.disconnect(); // ✅ SAFE SHUTDOWN
+        console.log('✅ Kafka consumer disconnected');
+      }
+    } catch (error) {
+      console.error('Kafka shutdown error:', error);
+    }
   }
 }

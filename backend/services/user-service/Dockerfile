@@ -12,4 +12,9 @@ COPY . .
 
 EXPOSE 50052
 
-CMD sh -c "cd services/user-service && npx prisma migrate deploy && pnpm start:dev"
+COPY services/user-service/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+# CMD sh -c "cd services/user-service && npx prisma migrate deploy && pnpm start:dev"

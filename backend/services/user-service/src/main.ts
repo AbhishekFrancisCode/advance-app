@@ -19,11 +19,26 @@ async function bootstrap() {
       },
     },
   );
-
+  app.enableShutdownHooks();
   // register interceptor
   app.useGlobalInterceptors(new RequestIdInterceptor());
 
   await app.listen();
+
+  const shutdown = (signal: string) => {
+    console.log(`🛑 ${signal} received`);
+
+    void (async () => {
+      try {
+        await app.close();
+      } finally {
+        process.exit(0);
+      }
+    })();
+  };
+
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 }
 bootstrap()
   .then(() => console.log('User Service started'))

@@ -6,6 +6,7 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { GrpcJwtGuard } from 'src/common/guards/grpc-jwt.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
+import { ShutdownService } from 'src/common/shutdown.service';
 
 @Module({
   imports: [
@@ -17,7 +18,13 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
     }),
   ],
   controllers: [UserController],
-  providers: [UserService, UserRepository, GrpcJwtGuard, RolesGuard],
+  providers: [
+    UserService,
+    UserRepository,
+    GrpcJwtGuard,
+    RolesGuard,
+    ShutdownService,
+  ],
   exports: [JwtModule],
 })
 export class UserModule {}

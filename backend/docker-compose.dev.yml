@@ -22,7 +22,6 @@ services:
       - .:/app
     depends_on:
       - postgres
-    stop_grace_period: 30s
 
   user-service:
     build:

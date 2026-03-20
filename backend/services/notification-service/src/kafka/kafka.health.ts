@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Kafka } from 'kafkajs';
+import { KafkaService } from './kafka.service';
 
 @Injectable()
 export class KafkaHealthService {
   private readonly logger = new Logger(KafkaHealthService.name);
 
-  constructor(private readonly kafka: Kafka) {}
+  constructor(private readonly kafkaService: KafkaService) {}
 
   async isKafkaHealthy(): Promise<boolean> {
     try {
-      const admin = this.kafka.admin();
+      const admin = this.kafkaService.getKafka().admin();
 
       await admin.connect();
 

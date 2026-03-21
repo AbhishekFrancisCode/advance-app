@@ -11,13 +11,18 @@ import type { ClientGrpc } from '@nestjs/microservices';
 import { firstValueFrom, Observable } from 'rxjs';
 import getDeviceType from 'src/utils/device-type';
 import { publishUserRegisteredEvent } from 'src/kafka/kafka.producer';
+import { createGrpcMetadata } from 'src/common/helper/grpc-client.helper';
+import { Metadata } from '@grpc/grpc-js';
 
 interface UserService {
-  CreateUserProfile(data: {
-    userId: string;
-    name: string;
-    phone?: string;
-  }): Observable<any>;
+  CreateUserProfile(
+    data: {
+      userId: string;
+      name: string;
+      phone?: string;
+    },
+    metadata: Metadata,
+  ): Observable<any>;
   UpdateUserProfile(data: {
     user_id: string;
     name?: string;
@@ -45,6 +50,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async register(dto: RegisterDto) {
+    const metadata = createGrpcMetadata();
     const existing = await this.authRepo.findByEmail(dto.email);
 
     if (existing) {
@@ -60,11 +66,14 @@ export class AuthService implements OnModuleInit {
 
     try {
       await firstValueFrom(
-        this.userService.CreateUserProfile({
-          userId: user.id,
-          name: dto.name,
-          phone: dto.phone,
-        }),
+        this.userService.CreateUserProfile(
+          {
+            userId: user.id,
+            name: dto.name,
+            phone: dto.phone,
+          },
+          metadata,
+        ),
       );
     } catch (err) {
       await this.authRepo.deleteUser(user.id);
@@ -114,8 +123,6 @@ export class AuthService implements OnModuleInit {
   }
 
   async login(dto: LoginDto) {
-    console.log('Login hit');
-
     const user = await this.authRepo.findByEmail(dto.email);
 
     if (!user) {

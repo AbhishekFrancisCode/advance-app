@@ -15,6 +15,7 @@ import { logger } from 'src/common/logger/logger';
 import { UserRegisteredEvent } from 'src/types/types';
 import { context, propagation, trace, Context } from '@opentelemetry/api';
 import { Consumer } from 'kafkajs';
+import { EventEnvelope } from 'src/types/event-envelope';
 
 @Injectable()
 export class KafkaConsumerService
@@ -68,15 +69,16 @@ export class KafkaConsumerService
       eachMessage: async ({ topic, message }) => {
         console.log('🔥 Kafka consumer hit');
         const raw = message.value?.toString() ?? '{}';
-        const envelope = JSON.parse(raw);
+        const envelope: EventEnvelope<UserRegisteredEvent> = JSON.parse(raw);
         logger.info({
           msg: 'received kafka event',
           eventId: envelope.eventId,
           eventType: envelope.eventType,
           requestId: envelope.requestId,
         });
-        const parsed: unknown = JSON.parse(raw);
-        const payload = parsed as UserRegisteredEvent;
+        // const parsed: unknown = JSON.parse(raw);
+        // const payload = parsed as UserRegisteredEvent;
+        const payload = envelope.payload;
 
         // Convert Kafka headers to OpenTelemetry carrier
         const carrier: Record<string, string> = {};
@@ -100,7 +102,7 @@ export class KafkaConsumerService
 
           try {
             logger.info({
-              requestId: payload.requestId,
+              requestId: envelope.requestId,
               msg: 'received kafka event',
               topic,
               email: payload.email,

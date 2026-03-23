@@ -75,6 +75,9 @@ services:
     image: redis:7
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+
   api-gateway-1:
     build:
      context: ./services/api-gateway
@@ -82,6 +85,8 @@ services:
     container_name: api-gateway-1
     depends_on:
       - redis
+    volumes:
+      - redis_data:/data
 
   api-gateway-2:
     build:
@@ -110,13 +115,23 @@ services:
       - api-gateway-3
   jaeger:
     image: jaegertracing/all-in-one:1.51
+    user: root 
     container_name: jaeger
     ports:
       - "16686:16686"   # Jaeger UI
+      
       - "4317:4317"     # OTLP gRPC
       - "4318:4318"     # OTLP HTTP
+    volumes:
+      - jaeger_data:/badger
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=badger           
+      - BADGER_EPHEMERAL=false             
+      - BADGER_DIRECTORY_VALUE=/badger/data
+      - BADGER_DIRECTORY_KEY=/badger/key   
 
 volumes:
-  postgres_data:
+    postgres_data:
+    jaeger_data:
+    redis_data:

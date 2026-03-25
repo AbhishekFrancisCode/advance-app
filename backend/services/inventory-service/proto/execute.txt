@@ -1,0 +1,20 @@
+******************************************
+to create grcp user.proto
+backend/services/api-gateway
+│
+├ proto
+│   └ inventory
+│       ├ inventory.pb.go
+│       └ user_grpc.pb.go
+│
+└ internal
+
+run below code :
+
+protoc \
+-I ../../proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=module=inventory-service \
+--go-grpc_opt=module=inventory-service \
+../../proto/inventory.proto

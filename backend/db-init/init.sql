@@ -1,3 +1,4 @@
 CREATE DATABASE authdb;
 CREATE DATABASE userdb;
 CREATE DATABASE notificationdb;
+CREATE DATABASE inventorydb;

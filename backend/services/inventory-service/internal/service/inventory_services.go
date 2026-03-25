@@ -5,6 +5,7 @@ import (
 	"inventory-service/internal/repository"
 	"log/slog"
 
+	"go.opentelemetry.io/otel"
 	"gorm.io/gorm"
 )
 
@@ -21,6 +22,10 @@ func NewInventoryService(db *gorm.DB, logger *slog.Logger) *InventoryService {
 }
 
 func (s *InventoryService) ReserveStock(ctx context.Context, productID string) (bool, error) {
+	tr := otel.Tracer("inventory-service")
+
+	ctx, span := tr.Start(ctx, "ReserveStock")
+	defer span.End()
 	rows, err := s.repo.DecrementStock(ctx, productID)
 
 	if err != nil {

@@ -4,7 +4,7 @@ package inventory;
 
 import "google/protobuf/empty.proto";
 
-// option go_package = "api-gateway/proto/inventory;inventory";
+option go_package = "inventory-service/proto/inventory;inventory";
 service InventoryService {
   rpc GetStock (GetStockRequest) returns (GetStockResponse);
 }

@@ -4,6 +4,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
 import { initTracing } from './common/observability/tracer';
+import express from 'express';
 
 async function bootstrap() {
   const protoPath = join(process.cwd(), '../../proto/notification.proto');
@@ -26,6 +27,14 @@ async function bootstrap() {
   app.enableShutdownHooks();
   // register interceptor
   app.useGlobalInterceptors(new RequestIdInterceptor());
+
+  const healthApp = express();
+
+  healthApp.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
+  });
+
+  healthApp.listen(3003);
 
   await app.listen();
 

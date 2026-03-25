@@ -5,6 +5,7 @@ import { join } from 'path';
 import { connectProducer } from './kafka/kafka.producer';
 import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
 import { initTracing } from './common/observability/tracer';
+import express from 'express';
 
 async function bootstrap() {
   const protoPath = join(process.cwd(), '../../proto/auth.proto');
@@ -31,9 +32,18 @@ async function bootstrap() {
     console.error('Kafka connection failed:', err);
   });
 
+  const healthApp = express();
+
+  healthApp.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
+  });
+
+  healthApp.listen(3001, () => {
+    console.log('Health server running on port 3001');
+  });
+
   await app.listen();
 
-  // 🔥 CRITICAL ADDITION
   const shutdown = (signal: string) => {
     console.log(`🛑 ${signal} received`);
 

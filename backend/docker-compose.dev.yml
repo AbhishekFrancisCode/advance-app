@@ -18,6 +18,7 @@ services:
     container_name: auth-service
     ports:
       - "50051:50051"
+      - "3001:3001" 
     volumes:
       - .:/app
     depends_on:
@@ -30,6 +31,7 @@ services:
     container_name: user-service
     ports:
       - "50052:50052"
+      - "3002:3002"
     volumes:
       - .:/app
     depends_on:
@@ -42,6 +44,7 @@ services:
     container_name: notification-service
     ports:
       - "50053:50053"
+      - "3003:3003"
     volumes:
       - .:/app
     env_file:

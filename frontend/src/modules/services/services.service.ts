@@ -5,5 +5,5 @@ import { Service } from "./services.types";
 
 export const getServices = async (): Promise<Service[]> => {
   const res = await apiClient.get("/services/health");
-  return res.data;
+  return res;
 };

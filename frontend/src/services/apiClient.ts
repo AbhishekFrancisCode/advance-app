@@ -1,63 +1,91 @@
-import axios from "axios";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import axios, { AxiosRequestConfig } from "axios";
+import { baseURL } from "@/config/config";
+import { logout } from "@/utils/sessions";
+import { URL_PATHS } from "@/utils/constants";
 
-const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
-  withCredentials: true,
-  timeout: 10000,
-});
+const apiClient = (() => {
+  const api = axios.create({
+    baseURL: baseURL,
+    withCredentials: true,
+    timeout: 10000,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
 
-// Request interceptor (attach token)
-apiClient.interceptors.request.use((config) => {
-  // const token = localStorage.getItem("accessToken");
+  //request interceptor (no token needed for cookie auth)
+  api.interceptors.request.use(
+    (config) => {
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
-  // if (token) {
-  //   config.headers.Authorization = `Bearer ${token}`;
-  // }
+  //response interceptor (refresh token logic)
+  api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest: AxiosRequestConfig & { _retry?: boolean } =
+        error.config || {};
 
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("accessToken");
+      if (
+        error.response?.status === 401 &&
+        !originalRequest._retry &&
+        !originalRequest.url?.includes("/auth/refresh-token")
+      ) {
+        originalRequest._retry = true;
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
+        try {
+          //call refresh endpoint (cookies sent automatically)
+          await axios.post(
+            `${baseURL}auth/refresh-token`,
+            {},
+            { withCredentials: true }
+          );
 
-  return config;
-});
-
-// Response interceptor (global error handling)
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // Handle 401 (token expired)
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-          {},
-          { withCredentials: true },
-        );
-
-        const newToken = res.data.accessToken;
-
-        localStorage.setItem("accessToken", newToken);
-
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
-        return apiClient(originalRequest);
-      } catch (err) {
-        // logout fallback
-        localStorage.removeItem("accessToken");
-        window.location.href = "/login";
+          //retry original request
+          return api(originalRequest);
+        } catch (err) {
+          logout();
+          window.location.href = URL_PATHS.LOGIN;
+          return Promise.reject(err);
+        }
       }
-    }
 
-    return Promise.reject(error);
-  },
-);
+      console.error(error?.response?.data || error.message);
+      return Promise.reject(error);
+    }
+  );
+
+  //API methods
+  const get = async (path: string) => {
+    const res = await api.get(path);
+    return res.data;
+  };
+
+  const post = async (path: string, data: any) => {
+    const res = await api.post(path, data);
+    return res.data;
+  };
+
+  const patch = async (path: string, data: any) => {
+    const res = await api.patch(path, data);
+    return res.data;
+  };
+
+  const put = async (path: string, data: any) => {
+    const res = await api.put(path, data);
+    return res.data;
+  };
+
+  const del = async (path: string) => {
+    const res = await api.delete(path);
+    return res.data;
+  };
+
+  return { get, post, patch, put, del };
+})();
 
 export default apiClient;

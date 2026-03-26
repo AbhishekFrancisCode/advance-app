@@ -30,6 +30,7 @@ export default function ServicesPage() {
   }
 
   const filteredServices = data?.filter((service) => {
+    console.log("data", data);
     const matchesSearch = service.name
       .toLowerCase()
       .includes(search.toLowerCase());

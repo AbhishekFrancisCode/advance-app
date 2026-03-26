@@ -98,7 +98,6 @@ func GetUserById(c *gin.Context) {
 	utils.HandleGrpcCall(c, func() (interface{}, error) {
 		return grpc.UserSvc.GetUserById(ctx, userID)
 	})
-
 }
 
 func DeleteUser(c *gin.Context) {

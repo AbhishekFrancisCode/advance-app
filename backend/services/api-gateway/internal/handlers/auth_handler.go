@@ -70,8 +70,24 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
-
-	log.Info("login successful")
+	c.SetCookie(
+		"accessToken",
+		resp.AccessToken,
+		3600,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
+	c.SetCookie(
+		"refreshToken",
+		resp.RefreshToken,
+		7*24*3600,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
 
 	// Return token to client
 	c.JSON(http.StatusOK, gin.H{

@@ -13,40 +13,42 @@ import (
 var jwtSecret = []byte("super-secret-key")
 
 func JWTMiddleware() gin.HandlerFunc {
-
+	var tokenString string
 	return func(c *gin.Context) {
 
 		// STEP 1: Read Authorization header from the request
 		// Example header:
 		// Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-		authHeader := c.GetHeader("Authorization")
-		// fmt.Println(authHeader)
+		cookieToken, err := c.Cookie("accessToken")
+		if err == nil && cookieToken != "" {
+			tokenString = cookieToken
+		} else {
+			// 🔁 2. Fallback to Authorization header (OLD support)
+			authHeader := c.GetHeader("Authorization")
+			// VALIDATION 1:
+			// If the header is missing, the user is not authenticated
+			if authHeader == "" {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"error": "Authorization header missing",
+				})
+				return
+			}
+			// STEP 2: Split the header
+			// Expected format: "Bearer TOKEN"
+			parts := strings.Split(authHeader, " ")
 
-		// VALIDATION 1:
-		// If the header is missing, the user is not authenticated
-		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Authorization header missing",
-			})
-			return
+			// VALIDATION 2:
+			// Check if header format is correct
+			if len(parts) != 2 {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"error": "Invalid Authorization format",
+				})
+				return
+			}
+			// Extract the token string
+			tokenString = parts[1]
 		}
-
-		// STEP 2: Split the header
-		// Expected format: "Bearer TOKEN"
-		parts := strings.Split(authHeader, " ")
-
-		// VALIDATION 2:
-		// Check if header format is correct
-		if len(parts) != 2 {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid Authorization format",
-			})
-			return
-		}
-
-		// Extract the token string
-		tokenString := parts[1]
-
+		c.Request.Header.Set("Authorization", "Bearer "+tokenString)
 		// STEP 3: Parse and validate the token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 

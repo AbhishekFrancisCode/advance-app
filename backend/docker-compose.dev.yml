@@ -18,7 +18,7 @@ services:
     container_name: auth-service
     ports:
       - "50051:50051"
-      - "3001:3001" 
+      - "3001:3001"
     volumes:
       - .:/app
     depends_on:
@@ -34,6 +34,17 @@ services:
       - "3002:3002"
     volumes:
       - .:/app
+    depends_on:
+      - postgres
+
+  inventory-service:
+    build:
+      context: ./services/inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    ports:
+      - "50054:50054"
+      - "2112:2112"
     depends_on:
       - postgres
 
@@ -83,7 +94,7 @@ services:
 
   api-gateway-1:
     build:
-     context: ./services/api-gateway
+      context: ./services/api-gateway
     hostname: api-gateway-1
     container_name: api-gateway-1
     depends_on:
@@ -118,23 +129,23 @@ services:
       - api-gateway-3
   jaeger:
     image: jaegertracing/all-in-one:1.51
-    user: root 
+    user: root
     container_name: jaeger
     ports:
-      - "16686:16686"   # Jaeger UI
-      
-      - "4317:4317"     # OTLP gRPC
-      - "4318:4318"     # OTLP HTTP
+      - "16686:16686" # Jaeger UI
+
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
     volumes:
       - jaeger_data:/badger
     environment:
       - COLLECTOR_OTLP_ENABLED=true
-      - SPAN_STORAGE_TYPE=badger           
-      - BADGER_EPHEMERAL=false             
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=false
       - BADGER_DIRECTORY_VALUE=/badger/data
-      - BADGER_DIRECTORY_KEY=/badger/key   
+      - BADGER_DIRECTORY_KEY=/badger/key
 
 volumes:
-    postgres_data:
-    jaeger_data:
-    redis_data:
+  postgres_data:
+  jaeger_data:
+  redis_data:

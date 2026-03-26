@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/gin-contrib/cors"
 )
 
 func main() {
@@ -31,6 +33,12 @@ func main() {
 	//Router
 	router := gin.Default()
 	router.Use(gin.Recovery())
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
 	router.Use(middleware.RequestLogger())
 	router.Use(middleware.TracingMiddleware())
 	router.Use(middleware.RequestID())                               // Assign correlation ID
@@ -43,6 +51,7 @@ func main() {
 	routes.NotificationRoutes(router)
 	routes.RegisterDebugRoutes(router)        // Debug route to test load balancing
 	routes.RegisterHealthRoutes(router, deps) //Register Health + Readiness routes
+	routes.RegisterServiceHealthRoute(router)
 
 	//opentelementry
 	tracerShutdown := observability.InitTracer("api-gateway")

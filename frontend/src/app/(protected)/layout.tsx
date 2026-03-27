@@ -1,7 +1,6 @@
-
 import Navbar from "@/components/layout/Navbar";
+import Sidebar from "@/components/layout/Sidebar";
 import AuthGuard from "@/components/shared/AuthGuard";
-
 
 export default function ProtectedLayout({
   children,
@@ -10,12 +9,16 @@ export default function ProtectedLayout({
 }) {
   return (
     <AuthGuard>
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
+      <div className="flex h-screen">
+        <Sidebar />
 
-        <main className="flex-1 bg-gray-50 dark:bg-black">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col">
+          <Navbar />
+
+          <main className="flex-1 overflow-auto bg-gray-50 dark:bg-black">
+            {children}
+          </main>
+        </div>
       </div>
     </AuthGuard>
   );

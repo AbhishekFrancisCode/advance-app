@@ -18,7 +18,7 @@ export default function LoginPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onSuccess: (res: any) => {
           console.log("LOGIN SUCCESS",res)
-          router.push("/services");
+          router.push("/dashboard");
         },
       }
     );

@@ -19,18 +19,27 @@ export interface DLQEventById {
   status: "PENDING" | "REPLAYED";
 }
 
-export const parsePayload = (payload: DLQPayload) => {
+export const parsePayload = (
+  payload: DLQPayload
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Record<string, unknown> | any[] | null => {
   if (!payload) return null;
 
-  if (typeof payload === "object") return payload;
+  if (typeof payload === "object") return payload as Record<string, unknown>;
 
   if (typeof payload === "string") {
     try {
-      return JSON.parse(payload);
+      const parsed = JSON.parse(payload);
+      
+      if (typeof parsed === "object" && parsed !== null) {
+        return parsed;
+      }
+
+      return null;
     } catch {
-      return payload;
+      return null; 
     }
   }
 
-  return payload;
-};
+  return null;
+}

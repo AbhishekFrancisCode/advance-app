@@ -3,6 +3,7 @@ package handlers
 import (
 	"api-gateway/internal/grpc"
 	"api-gateway/internal/utils"
+	"encoding/json"
 
 	"fmt"
 	"net/http"
@@ -60,7 +61,21 @@ func GetDlqEventsById(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp.Event)
+	event := resp.Event
+
+	var payload interface{}
+	if err := json.Unmarshal([]byte(event.Payload), &payload); err != nil {
+		payload = event.Payload
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":        event.Id,
+		"topic":     event.Topic,
+		"payload":   payload,
+		"error":     event.Error,
+		"createdAt": event.CreatedAt,
+		"status":    event.Status,
+	})
 }
 
 func ReplayDlqEvent(c *gin.Context) {

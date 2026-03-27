@@ -46,7 +46,7 @@ export class NotificationController {
     return {
       event: {
         ...event,
-        payload: JSON.parse(JSON.stringify(event.payload)),
+        payload: JSON.stringify(event.payload),
       },
     };
   }

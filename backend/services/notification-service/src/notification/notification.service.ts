@@ -94,6 +94,15 @@ export class NotificationService implements OnModuleInit {
     return this.notificationRepo.getDlqEvents();
   }
 
+  async getDlqEventsById(id: string) {
+    const event = await this.notificationRepo.getDlqEventById(id);
+
+    if (!event) {
+      throw new Error('DLQ event not found');
+    }
+    return event;
+  }
+
   async replayDlqEvent(id: string) {
     const event = await this.notificationRepo.getDlqEventById(id);
 

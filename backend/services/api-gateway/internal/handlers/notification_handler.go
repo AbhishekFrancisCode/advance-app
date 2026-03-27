@@ -46,9 +46,25 @@ func GetDlqEvents(c *gin.Context) {
 	c.JSON(http.StatusOK, resp.Events)
 }
 
+func GetDlqEventsById(c *gin.Context) {
+	id := c.Param("id")
+	ctx := utils.CreateGrpcContext(c)
+	resp, err := grpc.NotifySvc.GetDlqEventsById(
+		ctx, id,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp.Event)
+}
+
 func ReplayDlqEvent(c *gin.Context) {
 	id := c.Param("id")
-	fmt.Println("Notification_handler_id", id)
 	ctx := utils.CreateGrpcContext(c)
 	resp, err := grpc.NotifySvc.ReplayDlqEvent(ctx, id)
 

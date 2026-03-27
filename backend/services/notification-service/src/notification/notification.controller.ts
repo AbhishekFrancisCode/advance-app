@@ -35,6 +35,17 @@ export class NotificationController {
     return { events };
   }
 
+  @GrpcMethod('NotificationService', 'GetDlqEventById')
+  async getDlqEventsById(data: { id: string }) {
+    logger.info({
+      msg: 'Get Dlq event:',
+      id: data.id,
+    });
+    const event = await this.notificationService.getDlqEventsById(data.id);
+    console.log('event data : ', event);
+    return { event };
+  }
+
   @GrpcMethod('NotificationService', 'ReplayDlqEvent')
   async replayDlqEvent(data: { id: string }) {
     logger.info({

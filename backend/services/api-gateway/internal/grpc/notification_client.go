@@ -62,6 +62,19 @@ func (n *NotificationClient) GetDlqEvents(
 	return resp, nil
 }
 
+func (n *NotificationClient) GetDlqEventsById(
+	ctx context.Context,
+	id string,
+) (*notifypb.GetDlqEventResponse, error) {
+	resp, err := n.Client.GetDlqEventById(ctx, &notifypb.GetDlqEventRequestById{Id: id})
+	log.Println("resp", resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 func (n *NotificationClient) ReplayDlqEvent(
 	ctx context.Context,
 	id string,

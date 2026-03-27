@@ -13,6 +13,7 @@ func NotificationRoutes(router *gin.Engine) {
 
 	user.GET("/", middleware.JWTMiddleware(), handlers.GetNotificationsData)
 	user.GET("/dlq", middleware.JWTMiddleware(), middleware.AdminJWT(), handlers.GetDlqEvents)
+	user.GET("/dlq/:id", middleware.JWTMiddleware(), middleware.AdminJWT(), handlers.GetDlqEventsById)
 	user.POST("/dlq/:id/replay", middleware.JWTMiddleware(), middleware.AdminJWT(), handlers.ReplayDlqEvent)
 
 }

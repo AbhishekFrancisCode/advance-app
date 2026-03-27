@@ -17,32 +17,32 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* 🔹 Title */}
+      {/* Title */}
       <h1 className="text-2xl font-semibold">Dashboard</h1>
 
-      {/* 🔹 Cards */}
+      {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         
         {/* Services */}
-        <div className="p-4 rounded-xl border">
+        <div className="p-4 rounded-2xl border bg-white dark:bg-gray-900 shadow-sm">
           <p className="text-sm text-gray-500">Services</p>
           <p className="text-xl font-bold">{healthyServices}/{totalServices}</p>
         </div>
 
         {/* DLQ Total */}
-        <div className="p-4 rounded-xl border">
+        <div className="p-4 rounded-2xl border bg-white dark:bg-gray-900 shadow-sm">
           <p className="text-sm text-gray-500">DLQ Events</p>
           <p className="text-xl font-bold">{totalDLQ}</p>
         </div>
 
         {/* Pending DLQ */}
-        <div className="p-4 rounded-xl border">
+        <div className="p-4 rounded-2xl border bg-white dark:bg-gray-900 shadow-sm">
           <p className="text-sm text-gray-500">Pending DLQ</p>
           <p className="text-xl font-bold text-yellow-500">{pendingDLQ}</p>
         </div>
 
         {/* Health */}
-        <div className="p-4 rounded-xl border">
+        <div className="p-4 rounded-2xl border bg-white dark:bg-gray-900 shadow-sm">
           <p className="text-sm text-gray-500">System Health</p>
           <p className="text-xl font-bold text-green-500">
             {healthyServices === totalServices ? "Healthy" : "Degraded"}
@@ -50,8 +50,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 🔹 Services List */}
-      <div className="border rounded-xl p-4">
+      {/* Services List */}
+      <div className="p-4 rounded-2xl border bg-white dark:bg-gray-900 shadow-sm">
         <h2 className="font-medium mb-3">Services Status</h2>
 
         <div className="grid gap-2">

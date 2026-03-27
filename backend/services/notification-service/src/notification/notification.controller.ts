@@ -43,7 +43,12 @@ export class NotificationController {
     });
     const event = await this.notificationService.getDlqEventsById(data.id);
     console.log('event data : ', event);
-    return { event };
+    return {
+      event: {
+        ...event,
+        payload: JSON.parse(JSON.stringify(event.payload)),
+      },
+    };
   }
 
   @GrpcMethod('NotificationService', 'ReplayDlqEvent')

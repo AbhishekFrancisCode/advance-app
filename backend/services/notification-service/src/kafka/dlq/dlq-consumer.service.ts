@@ -59,7 +59,7 @@ export class DlqConsumerService implements OnModuleInit, OnApplicationShutdown {
   async onApplicationShutdown(signal?: string) {
     if (this.isShuttingDown) return;
     if (!this.consumer) return;
-    console.log('🛑 Shutting down DLQ consumer...', signal);
+    console.log('shutting down DLQ consumer...', signal);
 
     try {
       if (this.consumer) {
@@ -71,7 +71,7 @@ export class DlqConsumerService implements OnModuleInit, OnApplicationShutdown {
           ),
         ]);
 
-        console.log('✅ DLQ consumer disconnected');
+        console.log('DLQ consumer disconnected');
       }
     } catch (error) {
       console.error('DLQ shutdown error:', error);

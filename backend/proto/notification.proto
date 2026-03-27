@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package notification;
+import "google/protobuf/struct.proto";
 
 option go_package = "api-gateway/proto/notification;notification";
 service NotificationService {
@@ -22,7 +23,7 @@ message Notification {
 message DeadLetterEvent {
   string id        = 1;
   string topic     = 2;
-  string payload   = 3;
+  google.protobuf.Struct payload = 3;
   string error     = 4;
   string createdAt = 5;
   string status    = 6;

@@ -1,10 +1,17 @@
-// Logout (cookie-based auth)
-export function logout() {
-  // Call backend logout to clear cookies
-  fetch("/auth/logout", {
-    method: "POST",
-    credentials: "include",
-  }).finally(() => {
-    // window.location.href = "/login";
-  });
-}
+import apiClient, { setLoggingOut } from "@/services/apiClient";
+import { URL_PATHS } from "./constants";
+import { useAuthStore } from "@/store/auth.store";
+
+export const logout = async () => {
+  setLoggingOut(true);
+
+  try {
+    await apiClient.post("/auth/logout");
+  } catch (e) {
+    console.error("Logout failed (ignored)", e);
+  } finally {
+    useAuthStore.getState().setAuthenticated(false);
+    setLoggingOut(false);
+    window.location.href = URL_PATHS.LOGIN;
+  }
+};

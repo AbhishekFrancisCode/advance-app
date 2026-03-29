@@ -5,7 +5,6 @@ export const ENVIRONMENT = process.env.NEXT_PUBLIC_ENVIRONMENT;
 export const COOKIE_AUTH = process.env.NEXT_PUBLIC_COOKIE_AUTH;
 export const COOKIE_NAME = process.env.NEXT_PUBLIC_COOKIE_NAME;
 
-
 export const baseURL =
   ENVIRONMENT === "dev"
     ? process.env.NEXT_PUBLIC_API_URL_DEV

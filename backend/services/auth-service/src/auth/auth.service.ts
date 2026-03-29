@@ -82,6 +82,12 @@ export class AuthService implements OnModuleInit {
     }
 
     try {
+      const session = await this.authRepo.createRefreshToken(user.id, '', {
+        userAgent: dto.userAgent,
+        ipAddress: dto.ipAddress,
+        device: getDeviceType(dto.userAgent),
+      });
+
       const payload = {
         sub: user.id,
         email: user.email,
@@ -91,17 +97,17 @@ export class AuthService implements OnModuleInit {
         expiresIn: '15m',
       });
 
-      const refreshToken = this.jwtService.sign(payload, {
-        expiresIn: '7d',
-      });
+      const refreshToken = this.jwtService.sign(
+        {
+          sub: user.id,
+          sessionId: session.id,
+        },
+        { expiresIn: '7d' },
+      );
 
       const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
-      await this.authRepo.createRefreshToken(user.id, hashedRefreshToken, {
-        userAgent: dto.userAgent,
-        ipAddress: dto.ipAddress,
-        device: getDeviceType(dto.userAgent),
-      });
+      await this.authRepo.updateRefreshToken(session.id, hashedRefreshToken);
 
       // Publish event after successful registration
       await publishUserRegisteredEvent({
@@ -135,6 +141,12 @@ export class AuthService implements OnModuleInit {
       throw new RpcException('Invalid credentials');
     }
 
+    const session = await this.authRepo.createRefreshToken(user.id, '', {
+      userAgent: dto.userAgent,
+      ipAddress: dto.ipAddress,
+      device: getDeviceType(dto.userAgent),
+    });
+
     const payload = {
       sub: user.id,
       email: user.email,
@@ -145,17 +157,17 @@ export class AuthService implements OnModuleInit {
       expiresIn: '15m',
     });
 
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
-    });
+    const refreshToken = this.jwtService.sign(
+      {
+        sub: user.id,
+        sessionId: session.id,
+      },
+      { expiresIn: '7d' },
+    );
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
-    await this.authRepo.createRefreshToken(user.id, hashedRefreshToken, {
-      userAgent: dto.userAgent,
-      ipAddress: dto.ipAddress,
-      device: getDeviceType(dto.userAgent),
-    });
+    await this.authRepo.updateRefreshToken(session.id, hashedRefreshToken);
 
     return {
       message: 'successful',
@@ -167,41 +179,50 @@ export class AuthService implements OnModuleInit {
   async refresh(refreshToken: string) {
     try {
       const decoded = this.jwtService.verify(refreshToken);
-
+      console.log('refresh hit 2', decoded);
       const storedToken = await this.authRepo.getRefreshTokenByUserId(
-        decoded.sub,
+        decoded.sessionId,
       );
-
+      console.log('refresh hit 3', storedToken);
       if (!storedToken) {
         throw new RpcException('Access denied');
       }
 
       const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
-
+      console.log('refresh hit 3', isMatch);
       if (!isMatch) {
         throw new RpcException('Access denied');
       }
       // Rotation
-      // Delete old TOKEN
-      await this.authRepo.deleteRefreshTokens(decoded.sub);
-
-      const payload = {
-        sub: decoded.sub,
-        email: decoded.email,
-      };
-
-      const newAccessToken = this.jwtService.sign(payload, {
-        expiresIn: '15m',
-      });
-
-      const newRefreshToken = this.jwtService.sign(payload, {
-        expiresIn: '7d',
-      });
-
+      const newRefreshToken = this.jwtService.sign(
+        {
+          sub: decoded.sub,
+          sessionId: storedToken.id,
+        },
+        { expiresIn: '7d' },
+      );
+      console.log('refresh hit 4', newRefreshToken);
       const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
+      console.log('refresh hit 5', hashedRefreshToken);
+      const resc = await this.authRepo.updateRefreshToken(
+        storedToken.id,
+        hashedRefreshToken,
+      );
+      console.log('refresh hit 6', resc);
 
-      await this.authRepo.updateRefreshToken(decoded.sub, hashedRefreshToken);
-
+      const newAccessToken = this.jwtService.sign(
+        {
+          sub: decoded.sub,
+          email: decoded.email,
+        },
+        { expiresIn: '15m' },
+      );
+      console.log('refresh hit 7', newAccessToken);
+      const resd = await this.authRepo.updateRefreshToken(
+        storedToken.id,
+        hashedRefreshToken,
+      );
+      console.log('refresh hit 8', resd);
       return {
         message: 'refreshed',
         accessToken: newAccessToken,

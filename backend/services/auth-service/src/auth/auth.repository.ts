@@ -22,10 +22,10 @@ export class AuthRepository {
     });
   }
 
-  async getRefreshTokenByUserId(userId: string) {
+  async getRefreshTokenByUserId(sessionId: string) {
     return this.prisma.refreshToken.findFirst({
       where: {
-        userId: userId,
+        id: sessionId,
       },
     });
   }
@@ -51,18 +51,13 @@ export class AuthRepository {
     });
   }
 
-  async updateRefreshToken(userId: string, refreshToken: string) {
-    return this.prisma.userAuth.update({
+  async updateRefreshToken(sessionId: string, token: string) {
+    return this.prisma.refreshToken.update({
       where: {
-        id: userId,
+        id: sessionId,
       },
       data: {
-        refreshTokens: {
-          create: {
-            token: refreshToken,
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-          },
-        },
+        token: token,
       },
     });
   }

@@ -55,8 +55,9 @@ message RefreshRequest {
 }
 
 message RefreshResponse {
-  string message     = 1;
-  string accessToken = 2;
+  string message      = 1;
+  string accessToken  = 2;
+  string refreshToken = 3;
 }
 
 message MessageResponse {

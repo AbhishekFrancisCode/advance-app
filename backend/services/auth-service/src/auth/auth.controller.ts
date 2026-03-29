@@ -36,7 +36,6 @@ export class AuthController {
 
   @GrpcMethod('AuthService', 'RefreshToken')
   refresh(data: { refreshToken: string }) {
-    console.log('refresh hit 1', data.refreshToken);
     return this.authService.refresh(data.refreshToken);
   }
 

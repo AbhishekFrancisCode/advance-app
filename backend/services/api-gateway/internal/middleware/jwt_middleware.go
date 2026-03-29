@@ -23,7 +23,7 @@ func JWTMiddleware() gin.HandlerFunc {
 		if err == nil && cookieToken != "" {
 			tokenString = cookieToken
 		} else {
-			// 🔁 2. Fallback to Authorization header (OLD support)
+			// Fallback to Authorization header (OLD support)
 			authHeader := c.GetHeader("Authorization")
 			// VALIDATION 1:
 			// If the header is missing, the user is not authenticated

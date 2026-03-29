@@ -24,6 +24,7 @@ export class JwtGuard implements CanActivate {
 
     try {
       const cleanToken = token.replace('Bearer ', '');
+      console.log('cleanTocken', cleanToken);
 
       const decoded = this.jwtService.verify(cleanToken);
 

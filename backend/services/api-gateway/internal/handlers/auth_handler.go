@@ -134,6 +134,26 @@ func Register(c *gin.Context) {
 		return
 	}
 	log.Info("user registered")
+
+	c.SetCookie(
+		"accessToken",
+		resp.AccessToken,
+		3600,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
+
+	c.SetCookie(
+		"refreshToken",
+		resp.RefreshToken,
+		7*24*3600,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
 	// Return response from Auth Service
 	c.JSON(http.StatusOK, gin.H{
 		"message":      resp.Message,
@@ -144,18 +164,22 @@ func Register(c *gin.Context) {
 
 func RefreshToken(c *gin.Context) {
 	log := utils.Logger(c)
-	var req RefreshRequest
 
-	if err := c.ShouldBindJSON(&req); err != nil {
+	//get refresh token from cookie
+	refreshToken, err := c.Cookie("refreshToken")
+	if err != nil || refreshToken == "" {
 		utils.HandleGrpcError(c, err)
 		return
 	}
+
 	ctx := utils.CreateGrpcContext(c)
+
 	resp, err := grpc.AuthSvc.Client.RefreshToken(
 		ctx,
 		&authpb.RefreshRequest{
-			RefreshToken: req.RefreshToken,
-		})
+			RefreshToken: refreshToken,
+		},
+	)
 
 	if err != nil {
 		utils.HandleGrpcError(c, err)
@@ -163,10 +187,28 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	log.Info("Refresh token created")
+	c.SetCookie(
+		"accessToken",
+		resp.AccessToken,
+		3600,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
+
+	c.SetCookie(
+		"refreshToken",
+		resp.RefreshToken,
+		7*24*3600,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":     resp.Message,
-		"accessToken": resp.AccessToken,
+		"message": resp.Message,
 	})
 }
 
@@ -178,16 +220,27 @@ func Logout(c *gin.Context) {
 		utils.HandleGrpcError(c, err)
 		return
 	}
+
 	ctx := utils.CreateGrpcContext(c)
+
+	//call auth service (your existing logic)
 	resp, err := grpc.AuthSvc.Client.Logout(
-		ctx, &authpb.LogoutRequest{
+		ctx,
+		&authpb.LogoutRequest{
 			UserId: req.UserId,
-		})
+		},
+	)
+
 	if err != nil {
 		utils.HandleGrpcError(c, err)
 		return
 	}
+
 	log.Info("User Logout", "UserId", req.UserId)
+
+	c.SetCookie("accessToken", "", -1, "/", "", false, true)
+	c.SetCookie("refreshToken", "", -1, "/", "", false, true)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": resp.Message,
 	})

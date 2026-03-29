@@ -17,7 +17,7 @@ func RegisterAuthRoutes(router *gin.Engine) {
 
 	auth.POST("/refresh", handlers.RefreshToken)
 
-	auth.POST("/logout", handlers.Logout)
+	auth.POST("/logout", middleware.JWTMiddleware(), handlers.Logout)
 
 	auth.GET("/sessions", middleware.JWTMiddleware(), handlers.GetSessions)
 

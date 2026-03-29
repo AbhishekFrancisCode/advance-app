@@ -179,17 +179,14 @@ export class AuthService implements OnModuleInit {
   async refresh(refreshToken: string) {
     try {
       const decoded = this.jwtService.verify(refreshToken);
-      console.log('refresh hit 2', decoded);
       const storedToken = await this.authRepo.getRefreshTokenByUserId(
         decoded.sessionId,
       );
-      console.log('refresh hit 3', storedToken);
       if (!storedToken) {
         throw new RpcException('Access denied');
       }
 
       const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
-      console.log('refresh hit 3', isMatch);
       if (!isMatch) {
         throw new RpcException('Access denied');
       }
@@ -201,14 +198,11 @@ export class AuthService implements OnModuleInit {
         },
         { expiresIn: '7d' },
       );
-      console.log('refresh hit 4', newRefreshToken);
       const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
-      console.log('refresh hit 5', hashedRefreshToken);
-      const resc = await this.authRepo.updateRefreshToken(
+      await this.authRepo.updateRefreshToken(
         storedToken.id,
         hashedRefreshToken,
       );
-      console.log('refresh hit 6', resc);
 
       const newAccessToken = this.jwtService.sign(
         {
@@ -217,12 +211,10 @@ export class AuthService implements OnModuleInit {
         },
         { expiresIn: '15m' },
       );
-      console.log('refresh hit 7', newAccessToken);
-      const resd = await this.authRepo.updateRefreshToken(
+      await this.authRepo.updateRefreshToken(
         storedToken.id,
         hashedRefreshToken,
       );
-      console.log('refresh hit 8', resd);
       return {
         message: 'refreshed',
         accessToken: newAccessToken,

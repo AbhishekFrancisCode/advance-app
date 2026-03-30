@@ -73,22 +73,43 @@ export class AuthRepository {
   async getUserSessions(userId: string) {
     return this.prisma.refreshToken.findMany({
       where: {
-        userId: userId,
+        userId,
+        isRevoked: false,
       },
       orderBy: {
-        createdAt: 'desc',
+        lastUsedAt: 'desc',
       },
     });
   }
 
-  async deleteSession(sessionId: string) {
-    return this.prisma.refreshToken.delete({
-      where: {
-        id: sessionId,
-      },
+  async revokeSession(sessionId: string) {
+    return this.prisma.refreshToken.update({
+      where: { id: sessionId },
+      data: { isRevoked: true },
     });
   }
 
+  async revokeAllSessions(userId: string) {
+    return this.prisma.refreshToken.updateMany({
+      where: { userId },
+      data: { isRevoked: true },
+    });
+  }
+
+  async updateLastUsed(sessionId: string) {
+    return this.prisma.refreshToken.update({
+      where: { id: sessionId },
+      data: {}, // triggers @updatedAt
+    });
+  }
+
+  async getSessionById(sessionId: string) {
+    return this.prisma.refreshToken.findUnique({
+      where: { id: sessionId },
+    });
+  }
+
+  //Just for development purpose
   async deleteUser(userId: string) {
     return this.prisma.refreshToken.deleteMany({
       where: {

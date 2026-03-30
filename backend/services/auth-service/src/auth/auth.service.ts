@@ -185,6 +185,13 @@ export class AuthService implements OnModuleInit {
       if (!storedToken) {
         throw new RpcException('Access denied');
       }
+      //fetch session
+      const session = await this.authRepo.getSessionById(decoded.sessionId);
+
+      //block if revoked or missing
+      if (!session || session.isRevoked) {
+        throw new RpcException('Session expired or revoked');
+      }
 
       const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
       if (!isMatch) {
@@ -215,6 +222,7 @@ export class AuthService implements OnModuleInit {
         storedToken.id,
         hashedRefreshToken,
       );
+      await this.authRepo.updateLastUsed(decoded.sessionId);
       return {
         message: 'refreshed',
         accessToken: newAccessToken,
@@ -247,10 +255,13 @@ export class AuthService implements OnModuleInit {
   }
 
   async logoutSession(sessionId: string) {
-    await this.authRepo.deleteSession(sessionId);
+    await this.authRepo.revokeSession(sessionId);
 
-    return {
-      message: 'session logged out',
-    };
+    return { message: 'Session logged out successfully' };
+  }
+
+  async logoutAll(userId: string) {
+    await this.authRepo.revokeAllSessions(userId);
+    return { message: 'All sessions logged out' };
   }
 }

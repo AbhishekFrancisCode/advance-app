@@ -13,7 +13,8 @@ service AuthService {
   rpc Logout (LogoutRequest) returns (MessageResponse);
   rpc GetSessions (GetSessionsRequest) returns (SessionsResponse);
   rpc LogoutSession (LogoutSessionRequest) returns (MessageResponse);
-
+  rpc LogoutAllSessions (LogoutAllRequest) returns (MessageResponse);
+  
   rpc Health(google.protobuf.Empty) returns (HealthResponse);
 }
 
@@ -70,10 +71,13 @@ message GetSessionsRequest {
 }
 
 message Session {
-  string id        = 1;
-  string device    = 2;
-  string ipAddress = 3;
-  string createdAt = 4;
+  string id         = 1;
+  string device     = 2;
+  string ipAddress  = 3;
+  string createdAt  = 4;
+  string userAgent  = 5;
+  string lastUsedAt = 6;
+
 }
 
 message SessionsResponse {
@@ -82,4 +86,8 @@ message SessionsResponse {
 
 message LogoutSessionRequest {
   string sessionId = 1;
+}
+
+message LogoutAllRequest {
+  string userId = 1;
 }

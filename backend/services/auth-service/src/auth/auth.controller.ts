@@ -66,4 +66,9 @@ export class AuthController {
     });
     return this.authService.logoutSession(data.sessionId);
   }
+
+  @GrpcMethod('AuthService', 'LogoutAllSessions')
+  logoutAll(data: { userId: string }) {
+    return this.authService.logoutAll(data.userId);
+  }
 }

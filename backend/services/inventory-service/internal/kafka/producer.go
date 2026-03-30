@@ -14,7 +14,7 @@ type Producer struct {
 
 func NewProducer() *Producer {
 	return &Producer{producer: &kafka.Writer{
-		Addr:     kafka.TCP("localhost:9092"),
+		Addr:     kafka.TCP("kafka:9092"),
 		Balancer: &kafka.LeastBytes{},
 	}}
 }

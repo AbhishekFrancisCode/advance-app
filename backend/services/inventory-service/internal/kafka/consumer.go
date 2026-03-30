@@ -21,7 +21,7 @@ type Consumer struct {
 func NewConsumer(s *service.InventoryService, p *Producer, logger *slog.Logger) *Consumer {
 	return &Consumer{
 		consumer: kafka.NewReader(kafka.ReaderConfig{
-			Brokers: []string{"localhost:9092"},
+			Brokers: []string{"kafka:9092"},
 			Topic:   "order_created",
 			GroupID: "inventory-group",
 		}),

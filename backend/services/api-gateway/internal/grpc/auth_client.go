@@ -157,6 +157,20 @@ func (a *AuthClient) LogoutSession(ctx context.Context, sessionId string) (*auth
 	return resp, nil
 }
 
+func (a *AuthClient) LogoutAllSession(ctx context.Context, userId string) (*authpb.MessageResponse, error) {
+	resp, err := a.Client.LogoutAllSessions(
+		ctx,
+		&authpb.LogoutAllRequest{
+			UserId: userId,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 func (a *AuthClient) Close() {
 	if a.conn != nil {
 		a.conn.Close()

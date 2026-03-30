@@ -3,9 +3,13 @@ package handlers
 import (
 	"api-gateway/internal/grpc"
 	"api-gateway/internal/utils"
+	authpb "api-gateway/proto/auth"
 	userpb "api-gateway/proto/user"
+
 	"fmt"
+	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -97,6 +101,67 @@ func GetUserById(c *gin.Context) {
 
 	utils.HandleGrpcCall(c, func() (interface{}, error) {
 		return grpc.UserSvc.GetUserById(ctx, userID)
+	})
+}
+
+func GetMe(c *gin.Context) {
+	var userRes *userpb.UserProfileResponse
+	var sessionRes *authpb.SessionsResponse
+	var err1, err2 error
+	userID := c.GetString("user_id")
+	sessionID := c.GetString("sessionId")
+
+	if userID == "" && sessionID == "" {
+		c.JSON(404, gin.H{
+			"error": "user_id nor session_is not found in context",
+		})
+		return
+	}
+
+	log.Println("GetMe called", "userID", userID, "sessionID", sessionID)
+	ctx := utils.CreateGrpcContext(c)
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		userRes, err1 = grpc.UserSvc.GetUserById(ctx, userID)
+		fmt.Println("userRes:", userRes)
+		fmt.Println("err1:", err1)
+	}()
+
+	go func() {
+		defer wg.Done()
+		sessionRes, err2 = grpc.AuthSvc.Client.GetSessions(
+			ctx,
+			&authpb.GetSessionsRequest{
+				UserId: userID,
+			},
+		)
+		fmt.Println("sessionRes:", sessionRes)
+		fmt.Println("err2:", err2)
+	}()
+	wg.Wait()
+	if err1 != nil {
+		utils.HandleGrpcError(c, err1)
+		return
+	}
+
+	if err2 != nil {
+		utils.HandleGrpcError(c, err2)
+		return
+	}
+
+	if sessionRes == nil {
+		c.JSON(500, gin.H{"error": "sessions response is nil"})
+		// fmt.Println("sessionRes:", sessionRes)
+		// fmt.Println("err2:", err2)
+		// return
+	}
+
+	c.JSON(200, gin.H{
+		"user":     userRes,
+		"sessions": sessionRes.Sessions,
 	})
 }
 

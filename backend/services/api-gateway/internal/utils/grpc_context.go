@@ -37,7 +37,7 @@ func CreateGrpcContext(c *gin.Context) context.Context {
 	for k, v := range carrier {
 		md.Set(strings.ToLower(k), v[0])
 	}
-	ctx = metadata.NewOutgoingContext(c, md)
+	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	return ctx
 }

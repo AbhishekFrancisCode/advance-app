@@ -35,6 +35,10 @@ type LogoutSessionRequest struct {
 	SessionID string `json:"sessionId"`
 }
 
+type LogoutAllRequest struct {
+	UserId string `json:"userId"`
+}
+
 // Login handles POST /auth/login
 // This endpoint forwards the request to Auth Service via gRPC
 func Login(c *gin.Context) {
@@ -284,5 +288,27 @@ func GetLogoutSession(c *gin.Context) {
 		return
 	}
 	log.Info("User Session logout", "SessionID", req.SessionID)
+	c.JSON(http.StatusOK, resp)
+}
+
+func GetLogoutAllSession(c *gin.Context) {
+	log := utils.Logger(c)
+	var req LogoutAllRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+	ctx := utils.CreateGrpcContext(c)
+	resp, err := grpc.AuthSvc.Client.LogoutAllSessions(
+		ctx, &authpb.LogoutAllRequest{
+			UserId: req.UserId,
+		})
+
+	if err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+	log.Info("User All Session logout", "SessionID", req.UserId)
 	c.JSON(http.StatusOK, resp)
 }

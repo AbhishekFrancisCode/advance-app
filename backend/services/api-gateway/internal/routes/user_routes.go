@@ -15,7 +15,7 @@ func RegisterUserRoutes(router *gin.Engine) {
 
 	user.GET("/email", middleware.JWTMiddleware(), handlers.GetUserByEmail)
 
-	user.GET("/me", middleware.JWTMiddleware(), handlers.GetUserById)
+	user.GET("/me", middleware.JWTMiddleware(), handlers.GetMe)
 
 	user.DELETE("/delete", middleware.JWTMiddleware(), handlers.DeleteUser)
 

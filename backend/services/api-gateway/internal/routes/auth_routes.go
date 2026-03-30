@@ -21,6 +21,8 @@ func RegisterAuthRoutes(router *gin.Engine) {
 
 	auth.GET("/sessions", middleware.JWTMiddleware(), handlers.GetSessions)
 
-	auth.POST("/logout-session", middleware.JWTMiddleware(), handlers.GetLogoutSession)
+	auth.DELETE("/sessions/:id", middleware.JWTMiddleware(), handlers.GetLogoutSession)
+
+	auth.DELETE("/sessions", middleware.JWTMiddleware(), handlers.GetLogoutAllSession)
 
 }

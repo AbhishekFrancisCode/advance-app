@@ -84,6 +84,7 @@ func JWTMiddleware() gin.HandlerFunc {
 		// VALIDATION 5:
 		// Ensure user_id exists in the token payload
 		userID, ok := claims["sub"].(string)
+		sessionID := claims["sessionId"].(string)
 		// fmt.Println("sub", userID)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -95,6 +96,7 @@ func JWTMiddleware() gin.HandlerFunc {
 		// STEP 5: Store authenticated user identity in request context
 		// This allows handlers to access the logged-in user
 		c.Set("user_id", userID)
+		c.Set("sessionId", sessionID)
 		c.Set("role", claims["role"].(string))
 		// STEP 6: Allow request to continue to the handler
 		c.Next()

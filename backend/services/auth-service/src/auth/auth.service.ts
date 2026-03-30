@@ -13,6 +13,7 @@ import getDeviceType from 'src/utils/device-type';
 import { publishUserRegisteredEvent } from 'src/kafka/kafka.producer';
 import { createGrpcMetadata } from 'src/common/helper/grpc-client.helper';
 import { Metadata } from '@grpc/grpc-js';
+import { SessionsResponse } from './dto/session.dto';
 
 interface UserService {
   CreateUserProfile(
@@ -88,20 +89,13 @@ export class AuthService implements OnModuleInit {
         device: getDeviceType(dto.userAgent),
       });
 
-      const payload = {
-        sub: user.id,
-        email: user.email,
-      };
-
-      const accessToken = this.jwtService.sign(payload, {
-        expiresIn: '15m',
-      });
+      const accessToken = this.jwtService.sign(
+        { sub: user.id, email: user.email, sessionId: session.id },
+        { expiresIn: '15m' },
+      );
 
       const refreshToken = this.jwtService.sign(
-        {
-          sub: user.id,
-          sessionId: session.id,
-        },
+        { sub: user.id, sessionId: session.id },
         { expiresIn: '7d' },
       );
 
@@ -147,21 +141,18 @@ export class AuthService implements OnModuleInit {
       device: getDeviceType(dto.userAgent),
     });
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: '15m',
-    });
-
-    const refreshToken = this.jwtService.sign(
+    const accessToken = this.jwtService.sign(
       {
         sub: user.id,
+        email: user.email,
+        role: user.role,
         sessionId: session.id,
       },
+      { expiresIn: '15m' },
+    );
+
+    const refreshToken = this.jwtService.sign(
+      { sub: user.id, sessionId: session.id },
       { expiresIn: '7d' },
     );
 
@@ -215,6 +206,7 @@ export class AuthService implements OnModuleInit {
         {
           sub: decoded.sub,
           email: decoded.email,
+          sessionId: storedToken.id,
         },
         { expiresIn: '15m' },
       );
@@ -241,15 +233,16 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  async getSessions(userId: string) {
+  async getSessions(userId: string): Promise<SessionsResponse> {
     const sessions = await this.authRepo.getUserSessions(userId);
-
     return {
       sessions: sessions.map((s) => ({
-        id: s.id,
+        id: s.id ?? '',
         device: s.device ?? '',
         ipAddress: s.ipAddress ?? '',
-        createdAt: s.createdAt.toISOString(),
+        createdAt: s.createdAt?.toISOString() ?? '',
+        userAgent: s.userAgent ?? '',
+        lastUsedAt: (s.lastUsedAt as Date).toISOString() ?? '',
       })),
     };
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { logout } from "@/utils/sessions";
 
 export default function Navbar() {
@@ -19,12 +19,14 @@ export default function Navbar() {
           <span className="text-sm font-medium">Admin</span>
         </div>
 
-        <button
+        <LogOut className="text-red-900 cursor-pointer" onClick={logout}/>
+
+        {/* <button
           onClick={logout}
           className="text-sm text-red-500"
         >
           Logout
-        </button>
+        </button> */}
       </div>
     </div>
   );

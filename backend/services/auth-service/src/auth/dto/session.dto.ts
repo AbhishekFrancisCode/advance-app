@@ -6,5 +6,6 @@ export type SessionsResponse = {
     createdAt: string;
     userAgent: string;
     lastUsedAt: string;
+    expiresAt: string;
   }[];
 };

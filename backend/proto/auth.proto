@@ -77,6 +77,7 @@ message Session {
   string createdAt  = 4;
   string userAgent  = 5;
   string lastUsedAt = 6;
+  string expiresAt  = 7;
 
 }
 

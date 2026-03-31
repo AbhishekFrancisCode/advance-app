@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Server,
   AlertTriangle,
+  UserRoundCog,
 } from "lucide-react";
 
 const menu = [
@@ -20,6 +21,7 @@ const menu = [
     items: [
       { name: "Services", path: "/services", icon: Server },
       { name: "DLQ", path: "/dlq", icon: AlertTriangle },
+      { name: "Sessions", path: "/sessions", icon: UserRoundCog },
     ],
   },
 ];

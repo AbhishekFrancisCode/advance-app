@@ -1,5 +1,6 @@
-import { useMutation } from "@tanstack/react-query";
-import { login, register } from "./auth.services";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getUserSessions, login, register } from "./auth.services";
+import { Session } from "./auth.types";
 
 export const useLogin = () => {
   return useMutation({
@@ -10,5 +11,12 @@ export const useLogin = () => {
 export const useRegister = () => {
   return useMutation({
     mutationFn: register,
+  });
+};
+
+export const useSessions = () => {
+  return useQuery<Session[]>({
+    queryKey: ["sessions"],
+    queryFn: getUserSessions,
   });
 };

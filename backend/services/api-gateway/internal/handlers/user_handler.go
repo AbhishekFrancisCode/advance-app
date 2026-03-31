@@ -7,7 +7,6 @@ import (
 	userpb "api-gateway/proto/user"
 
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 
@@ -105,6 +104,33 @@ func GetUserById(c *gin.Context) {
 }
 
 func GetMe(c *gin.Context) {
+
+	userID := c.GetString("user_id")
+	sessionID := c.GetString("sessionId")
+
+	if userID == "" && sessionID == "" {
+		c.JSON(404, gin.H{
+			"error": "user_id nor session_is not found in context",
+		})
+		return
+	}
+	ctx := utils.CreateGrpcContext(c)
+
+	userRes, err := grpc.UserSvc.Client.GetUserById(ctx,
+		&userpb.GetUserRequest{UserId: userID})
+
+	if err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"user":             userRes,
+		"currentSessionId": sessionID,
+	})
+}
+
+func GetUserWithSessions(c *gin.Context) {
 	var userRes *userpb.UserProfileResponse
 	var sessionRes *authpb.SessionsResponse
 	var err1, err2 error
@@ -117,8 +143,6 @@ func GetMe(c *gin.Context) {
 		})
 		return
 	}
-
-	log.Println("GetMe called", "userID", userID, "sessionID", sessionID)
 	ctx := utils.CreateGrpcContext(c)
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -126,8 +150,6 @@ func GetMe(c *gin.Context) {
 	go func() {
 		defer wg.Done()
 		userRes, err1 = grpc.UserSvc.GetUserById(ctx, userID)
-		fmt.Println("userRes:", userRes)
-		fmt.Println("err1:", err1)
 	}()
 
 	go func() {
@@ -138,8 +160,6 @@ func GetMe(c *gin.Context) {
 				UserId: userID,
 			},
 		)
-		fmt.Println("sessionRes:", sessionRes)
-		fmt.Println("err2:", err2)
 	}()
 	wg.Wait()
 	if err1 != nil {
@@ -154,9 +174,6 @@ func GetMe(c *gin.Context) {
 
 	if sessionRes == nil {
 		c.JSON(500, gin.H{"error": "sessions response is nil"})
-		// fmt.Println("sessionRes:", sessionRes)
-		// fmt.Println("err2:", err2)
-		// return
 	}
 
 	c.JSON(200, gin.H{

@@ -23,7 +23,7 @@ export class AuthRepository {
   }
 
   async getRefreshTokenByUserId(sessionId: string) {
-    return this.prisma.refreshToken.findFirst({
+    return this.prisma.refreshToken.findUnique({
       where: {
         id: sessionId,
       },

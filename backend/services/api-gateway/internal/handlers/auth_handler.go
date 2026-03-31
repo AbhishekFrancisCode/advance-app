@@ -67,7 +67,7 @@ func Login(c *gin.Context) {
 			IpAddress: ip,
 		},
 	)
-
+	c.SetSameSite(http.SameSiteLaxMode)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -79,7 +79,7 @@ func Login(c *gin.Context) {
 		resp.AccessToken,
 		3600,
 		"/",
-		"localhost",
+		"",
 		false,
 		true,
 	)
@@ -88,7 +88,7 @@ func Login(c *gin.Context) {
 		resp.RefreshToken,
 		7*24*3600,
 		"/",
-		"localhost",
+		"",
 		false,
 		true,
 	)
@@ -138,13 +138,13 @@ func Register(c *gin.Context) {
 		return
 	}
 	log.Info("user registered")
-
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
 		"accessToken",
 		resp.AccessToken,
 		3600,
 		"/",
-		"localhost",
+		"",
 		false,
 		true,
 	)
@@ -154,7 +154,7 @@ func Register(c *gin.Context) {
 		resp.RefreshToken,
 		7*24*3600,
 		"/",
-		"localhost",
+		"",
 		false,
 		true,
 	)
@@ -191,12 +191,13 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	log.Info("Refresh token created")
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
 		"accessToken",
 		resp.AccessToken,
 		3600,
 		"/",
-		"localhost",
+		"",
 		false,
 		true,
 	)
@@ -206,7 +207,7 @@ func RefreshToken(c *gin.Context) {
 		resp.RefreshToken,
 		7*24*3600,
 		"/",
-		"localhost",
+		"",
 		false,
 		true,
 	)
@@ -241,7 +242,7 @@ func Logout(c *gin.Context) {
 	}
 
 	log.Info("User Logout", "UserId", req.UserId)
-
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("accessToken", "", -1, "/", "", false, true)
 	c.SetCookie("refreshToken", "", -1, "/", "", false, true)
 
@@ -271,23 +272,55 @@ func GetSessions(c *gin.Context) {
 
 func GetLogoutSession(c *gin.Context) {
 	log := utils.Logger(c)
-	var req LogoutSessionRequest
+	sessionId := c.Param("id")
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.HandleGrpcError(c, err)
+	if sessionId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Session ID required"})
 		return
 	}
+
 	ctx := utils.CreateGrpcContext(c)
 	resp, err := grpc.AuthSvc.Client.LogoutSession(
 		ctx, &authpb.LogoutSessionRequest{
-			SessionId: req.SessionID,
+			SessionId: sessionId,
 		})
 
 	if err != nil {
 		utils.HandleGrpcError(c, err)
 		return
 	}
-	log.Info("User Session logout", "SessionID", req.SessionID)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("accessToken", "", -1, "/", "", false, true)
+	c.SetCookie("refreshToken", "", -1, "/", "", false, true)
+
+	log.Info("User Session logout", "SessionID", sessionId)
+	c.JSON(http.StatusOK, resp)
+}
+
+func LogoutCurrentSession(c *gin.Context) {
+	log := utils.Logger(c)
+	sessionId := c.GetString("sessionId")
+
+	if sessionId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Session ID required"})
+		return
+	}
+
+	ctx := utils.CreateGrpcContext(c)
+	resp, err := grpc.AuthSvc.Client.LogoutSession(
+		ctx, &authpb.LogoutSessionRequest{
+			SessionId: sessionId,
+		})
+
+	if err != nil {
+		utils.HandleGrpcError(c, err)
+		return
+	}
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("accessToken", "", -1, "/", "", false, true)
+	c.SetCookie("refreshToken", "", -1, "/", "", false, true)
+
+	log.Info("User Session logout", "SessionID", sessionId)
 	c.JSON(http.StatusOK, resp)
 }
 

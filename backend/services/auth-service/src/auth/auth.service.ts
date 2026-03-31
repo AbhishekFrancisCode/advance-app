@@ -242,6 +242,7 @@ export class AuthService implements OnModuleInit {
         ipAddress: s.ipAddress ?? '',
         createdAt: s.createdAt?.toISOString() ?? '',
         userAgent: s.userAgent ?? '',
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         lastUsedAt: (s.lastUsedAt as Date).toISOString() ?? '',
       })),
     };

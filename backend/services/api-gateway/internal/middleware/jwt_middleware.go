@@ -13,9 +13,8 @@ import (
 var jwtSecret = []byte("super-secret-key")
 
 func JWTMiddleware() gin.HandlerFunc {
-	var tokenString string
 	return func(c *gin.Context) {
-
+		var tokenString string
 		// STEP 1: Read Authorization header from the request
 		// Example header:
 		// Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -72,7 +71,14 @@ func JWTMiddleware() gin.HandlerFunc {
 		}
 
 		// STEP 4: Extract the claims (payload inside JWT)
-		claims := token.Claims.(jwt.MapClaims)
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid token claims",
+			})
+			return
+		}
+
 		// fmt.Println("claims", claims)
 		// Example JWT payload:
 		// {
@@ -84,20 +90,30 @@ func JWTMiddleware() gin.HandlerFunc {
 		// VALIDATION 5:
 		// Ensure user_id exists in the token payload
 		userID, ok := claims["sub"].(string)
-		sessionID := claims["sessionId"].(string)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid user_id in token",
+			})
+			return
+		}
+		sessionID, ok := claims["sessionId"].(string)
 		// fmt.Println("sub", userID)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid token payload",
+				"error": "Invalid sessionId in token",
 			})
 			return
+		}
+		role, ok := claims["role"].(string)
+		if !ok {
+			role = "" // or default
 		}
 
 		// STEP 5: Store authenticated user identity in request context
 		// This allows handlers to access the logged-in user
 		c.Set("user_id", userID)
 		c.Set("sessionId", sessionID)
-		c.Set("role", claims["role"].(string))
+		c.Set("role", role)
 		// STEP 6: Allow request to continue to the handler
 		c.Next()
 	}

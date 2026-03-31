@@ -5,6 +5,7 @@ import { getDeviceInfo } from "@/utils/device";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 dayjs.extend(relativeTime);
 
@@ -16,7 +17,7 @@ interface Props {
 
 export default function SessionCard({ session, isCurrent, onLogout }: Props) {
   const device = getDeviceInfo(session.userAgent);
-
+  const timeLeft = useCountdown(session.expiresAt);
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -53,7 +54,32 @@ export default function SessionCard({ session, isCurrent, onLogout }: Props) {
             </button>
           )}
         </div>
+        <div className="text-xs text-gray-400">Expires in {timeLeft}</div>
       </div>
     </motion.div>
   );
+}
+
+function useCountdown(expiresAt: string) {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const diff = dayjs(expiresAt).diff(dayjs());
+
+      if (diff <= 0) {
+        setTimeLeft("Expired");
+        return;
+      }
+
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+
+      setTimeLeft(`${minutes}m ${seconds}s`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  return timeLeft;
 }

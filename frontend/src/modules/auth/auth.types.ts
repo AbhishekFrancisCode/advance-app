@@ -6,4 +6,5 @@ export interface Session {
   lastUsedAt: string;
   isRevoked: boolean;
   userAgent: string;
+  expiresAt:string;
 }

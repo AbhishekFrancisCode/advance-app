@@ -3,6 +3,7 @@
 import { Bell, LogOut } from "lucide-react";
 import { logout } from "@/utils/sessions";
 import { useAuth } from "@/modules/user/user.hooks";
+import ThemeToggle from "@/utils/theme_toggle";
 
 export default function Navbar() {
   const { data: authData } = useAuth();
@@ -17,6 +18,7 @@ export default function Navbar() {
       <div className="text-sm text-gray-500">System Overview</div>
 
       <div className="flex items-center gap-4">
+        <ThemeToggle/>
         <Bell size={18} className="cursor-pointer" />
 
         <div className="flex items-center gap-2">

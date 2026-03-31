@@ -2,6 +2,7 @@
 "use client";
 
 import SessionCard from "@/components/ui/SessionCard";
+import SessionSkeleton from "@/components/ui/SessionSkeleton";
 import { useLogoutSession, useSessions } from "@/modules/auth/auth.hooks";
 import { useCurrentSession } from "@/modules/auth/auth.services";
 import { Session } from "@/modules/auth/auth.types";
@@ -18,15 +19,42 @@ export default function SessionsPage() {
     });
   };
 
-  if (isLoading) return <div>Loading sessions...</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-3 p-6">
+        {[...Array(3)].map((_, i) => (
+          <SessionSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  if (!sessions?.length) {
+    return (
+      <div className="p-6 text-center text-gray-500">
+        <div className="text-4xl mb-2">🧩</div>
+        <p>No active sessions</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-xl font-semibold text-gray-800">Active Sessions</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Manage devices where you are currently logged in.
-        </p>
+      <button
+        onClick={() => handleLogoutSession("")}
+        className="px-3 py-1 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 active:scale-95 transition"
+      >
+        Logout
+      </button>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">
+            Active Sessions
+          </h1>
+          <p className="text-sm text-gray-500">
+            Manage where you&apos;re logged in
+          </p>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -35,7 +63,12 @@ export default function SessionsPage() {
         )}
         {sessions?.map((session: Session) => {
           const isCurrent = session.id === currentSessionId;
-          console.log("Session ID:", session.id, "Current Session ID:", currentSessionId);
+          console.log(
+            "Session ID:",
+            session.id,
+            "Current Session ID:",
+            currentSessionId,
+          );
           return (
             <SessionCard
               key={session.id}

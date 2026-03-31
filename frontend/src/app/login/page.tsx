@@ -25,8 +25,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black to-gray-900">
-      <div className="w-[400px] bg-white/5 backdrop-blur-lg border border-white/10 p-8 rounded-2xl shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-black to-gray-900 dark:bg-zinc-700">
+      <div className="w-100 bg-white/5 backdrop-blur-lg border border-white/10 p-8 rounded-2xl shadow-xl">
         <h1 className="text-2xl font-semibold text-white mb-6">
           Welcome Back
         </h1>

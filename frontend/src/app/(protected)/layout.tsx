@@ -15,7 +15,7 @@ export default function ProtectedLayout({
         <div className="flex-1 flex flex-col">
           <Navbar />
 
-          <main className="flex-1 overflow-auto bg-gray-50 dark:bg-black">
+          <main className="flex-1 overflow-auto">
             {children}
           </main>
         </div>

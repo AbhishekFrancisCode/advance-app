@@ -5,4 +5,5 @@ export interface Session {
   createdAt: string;
   lastUsedAt: string;
   isRevoked: boolean;
+  userAgent: string;
 }

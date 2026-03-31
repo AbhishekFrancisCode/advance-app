@@ -3,29 +3,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import apiClient from "@/services/apiClient";
+import { useAuth } from "@/modules/user/user.hooks";
 
-export default function AuthGuard({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const { isLoading, isError } = useAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await apiClient.get("/users/me");
-        setLoading(false);
-      } catch {
-        router.replace("/login");
-      }
-    };
+    if (isError) {
+      router.replace("/login");
+    }
+  }, [isError, router]);
 
-    checkAuth();
-  }, [router]);
-
-  if (loading) return null;
+  if (isLoading) return null;
 
   return <>{children}</>;
 }

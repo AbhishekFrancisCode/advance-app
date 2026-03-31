@@ -2,12 +2,11 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { baseURL } from "@/config/config";
 import { logout } from "@/utils/sessions";
-import { URL_PATHS } from "@/utils/constants";
 
 let isRefreshing = false;
 
 let failedQueue: {
-  resolve: (value?: unknown) => void;
+  resolve: () => void;
   reject: (reason?: any) => void;
 }[] = [];
 
@@ -25,25 +24,20 @@ export const setLoggingOut = (value: boolean) => {
 const processQueue = (error: any) => {
   failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
-    else prom.resolve(null);
+    else prom.resolve();
   });
   failedQueue = [];
 };
 
 const apiClient = axios.create({
   baseURL: baseURL,
-  withCredentials: true,
+  withCredentials: true, // ✅ cookies only
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
-
-apiClient.interceptors.request.use(
-  (config) => config,
-  (error) => Promise.reject(error),
-);
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -56,11 +50,7 @@ apiClient.interceptors.response.use(
     const isRefreshCall = originalRequest?.url?.includes("/auth/refresh");
 
     if (error.response?.status === 401 && !isRefreshCall) {
-      if (isLoggedOut) {
-        console.log("Blocked refresh (user logged out)");
-        return Promise.reject(error);
-      }
-      if (isLoggingOut) {
+      if (isLoggedOut || isLoggingOut) {
         console.log("Blocked refresh (user logged out)");
         return Promise.reject(error);
       }
@@ -71,33 +61,45 @@ apiClient.interceptors.response.use(
 
       originalRequest._retry = true;
 
+      /**
+       * 🚨 If refresh already in progress → queue
+       */
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(() => apiClient(originalRequest));
+          failedQueue.push({
+            resolve: () => resolve(apiClient(originalRequest)),
+            reject: (err: any) => reject(err),
+          });
+        });
       }
 
       isRefreshing = true;
 
       try {
-        await axios.post(
-          `${baseURL}auth/refresh`,
-          {},
-          { withCredentials: true },
-        );
+        /**
+         * 🔥 CALL REFRESH (cookie-based)
+         */
+        await apiClient.post("/auth/refresh");
+
+        /**
+         * 🔥 Process queue (no token needed)
+         */
         processQueue(null);
 
+        /**
+         * 🔥 Retry original request (cookie will be auto-updated)
+         */
+        await new Promise((resolve) => setTimeout(resolve, 50));
         return apiClient(originalRequest);
       } catch (err) {
         processQueue(err);
         logout();
-        window.location.href = URL_PATHS.LOGIN;
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
       }
     }
-    console.error(error?.response?.data || error.message);
+
     return Promise.reject(error);
   },
 );

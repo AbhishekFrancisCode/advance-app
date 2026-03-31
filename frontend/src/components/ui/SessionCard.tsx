@@ -1,6 +1,6 @@
 "use client";
 
-import { Session } from "@/modules/sessions/session.types";
+import { Session } from "@/modules/auth/auth.types";
 
 export default function SessionCard({
   session,

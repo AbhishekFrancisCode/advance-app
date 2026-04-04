@@ -117,6 +117,19 @@ services:
     container_name: api-gateway-3
     depends_on:
       - redis
+
+  ws-service:
+    build:
+      context: ./services/ws-services
+      dockerfile: Dockerfile
+    container_name: ws-service
+    ports:
+      - "50055:50055"
+      - "8001:8001`"
+    depends_on:
+      - kafka
+
+
   nginx:
     image: nginx:latest
     ports:
@@ -127,6 +140,7 @@ services:
       - api-gateway-1
       - api-gateway-2
       - api-gateway-3
+
   jaeger:
     image: jaegertracing/all-in-one:1.51
     user: root
